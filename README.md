@@ -1,5 +1,9 @@
 # DuoRemote
 
+<p align="center">
+  <img src="docs/screenshots/hero.jpg" alt="DuoRemote on an iPhone Duo in laptop pose: a Mac's desktop on the top half, a trackpad, modifier keys and arrow keys on the bottom half" width="360">
+</p>
+
 Control your Mac from your iPhone, built for the iPhone Duo. Uses the Screen Sharing already built into macOS, so there's nothing to install on the Mac.
 
 - **Copy text off the Mac's screen.** macOS won't share its clipboard with non-Apple screen-sharing apps, so the app reads the Mac's screen with Live Text, right on the phone, and you select and copy what you need.
@@ -88,6 +92,7 @@ Metal shaders are compiled when the app runs, so you don't need to download the 
 
 - [RoyalVNCKit](https://github.com/royalapplications/royalvnc) 1.1.0, MIT licensed, vendored in `Vendor/RoyalVNCKit` with patches listed in `Vendor/RoyalVNCKit/PATCHES.md`. Its license is in `Vendor/RoyalVNCKit/LICENSE`.
 - [CryptoSwift](https://github.com/krzyzanowskim/CryptoSwift), used by RoyalVNCKit (royalapplications fork). Copyright (C) 2014-3099 Marcin Krzyżanowski. This product includes software developed by the "Marcin Krzyzanowski" (http://krzyzanowskim.com/).
+- iPhone Duo 3D model in the header image by Pikkme Studio, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 - D3DES by Richard Outerbridge (public domain), with changes © 1998 Olivetti & Oracle Research Laboratory, included in RoyalVNCKit.
 
 The full licence texts are in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md), and in the app under Settings → Acknowledgements.
