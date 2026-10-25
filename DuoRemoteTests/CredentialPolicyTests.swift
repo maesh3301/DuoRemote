@@ -78,4 +78,25 @@ struct CredentialPolicyTests {
         #expect(!RetryPolicy.shouldRetry(.outsideTailscale))
         #expect(!RetryPolicy.shouldRetry(.insecureAuthentication))
     }
+
+    @Test func credentialsCapAt63BytesOnACharacterBoundary() {
+        #expect(VNCCredentialLimit.truncated(String(repeating: "a", count: 63)).utf8.count == 63)
+        #expect(VNCCredentialLimit.truncated(String(repeating: "a", count: 64)).utf8.count == 63)
+        // Two-byte letters: 31 fit (62 bytes), the 32nd would cross the limit.
+        let accented = VNCCredentialLimit.truncated(String(repeating: "é", count: 40))
+        #expect(accented.count == 31 && accented.utf8.count == 62)
+        // Four-byte emoji: 15 fit (60 bytes) — this used to copy 252 bytes into a 64-byte field.
+        let emoji = VNCCredentialLimit.truncated(String(repeating: "😀", count: 63))
+        #expect(emoji.count == 15 && emoji.utf8.count == 60)
+        // A character that would straddle the boundary is dropped, never split.
+        #expect(VNCCredentialLimit.truncated(String(repeating: "a", count: 62) + "é") == String(repeating: "a", count: 62))
+        #expect(VNCCredentialLimit.truncated("") == "")
+    }
+
+    @Test func overLongCredentialsAreRejectedUpFront() {
+        #expect(VNCCredentialLimit.fits(String(repeating: "a", count: 63)))
+        #expect(!VNCCredentialLimit.fits(String(repeating: "a", count: 64)))
+        #expect(!VNCCredentialLimit.fits(String(repeating: "é", count: 32)))
+        #expect(VNCCredentialLimit.fits("correct horse battery staple"))
+    }
 }

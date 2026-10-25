@@ -1,3 +1,4 @@
+@preconcurrency import RoyalVNCKit
 import SwiftUI
 import os
 
@@ -566,6 +567,10 @@ struct HostEditor: View {
         hostname.trimmingCharacters(in: .whitespaces).isEmpty ? "Enter the Mac's name or IP address." : nil
     }
 
+    private var credentialError: String? {
+        VNCCredentialLimit.fits(username) && VNCCredentialLimit.fits(password) ? nil : CredentialText.tooLong
+    }
+
     private var portError: String? {
         port == nil ? "Port must be between 1 and 65535." : nil
     }
@@ -598,6 +603,7 @@ struct HostEditor: View {
                         .autocorrectionDisabled()
                     SecureField("Password", text: $password)
                         .textContentType(nil)
+                    if let credentialError { ErrorText(credentialError) }
                 } header: {
                     Text("Sign-in")
                 } footer: {
@@ -631,7 +637,7 @@ struct HostEditor: View {
     }
 
     private func save() {
-        guard nameError == nil, hostnameError == nil, let port else {
+        guard nameError == nil, hostnameError == nil, credentialError == nil, let port else {
             showErrors = true
             return
         }
@@ -666,7 +672,7 @@ struct HostEditor: View {
     }
 }
 
-private struct ErrorText: View {
+struct ErrorText: View {
     let text: String
     init(_ text: String) { self.text = text }
 

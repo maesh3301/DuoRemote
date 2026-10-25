@@ -31,6 +31,10 @@ public final class VNCConnection: NSObjectOrAnyObject {
 	// to do with it) instead of the library writing UIPasteboard from a background thread.
 	public weak var clipboardDelegate: VNCConnectionClipboardDelegate?
 
+	// LOCAL PATCH: whether a server may connect with no sign-in at all ("None" security).
+	// Off by default; set before connect().
+	public var isUnauthenticatedAccessAllowed = false
+
 #if canImport(ObjectiveC)
 	@objc
 #endif

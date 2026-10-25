@@ -103,16 +103,17 @@ private extension VNCConnection {
 
 		let supportedSecurityTypes = supportedTypes.securityTypes
 
-		if supportedSecurityTypes.contains(.none) {
-			chosenSecurityType = .none
-		} else if supportedSecurityTypes.contains(.diffieHellman) {
+		// LOCAL PATCH: prefer the macOS (ARD) sign-in. "None" was chosen first even alongside ARD,
+		// so a server could skip sign-in; it's now used only when the app allows it. Tight is never
+		// chosen: it isn't implemented here, so it also connected without any sign-in.
+		if supportedSecurityTypes.contains(.diffieHellman) {
 			chosenSecurityType = .diffieHellman
 		} else if supportedSecurityTypes.contains(.ultraVNCMSLogonII) {
 			chosenSecurityType = .ultraVNCMSLogonII
 		} else if supportedSecurityTypes.contains(.vnc) {
 			chosenSecurityType = .vnc
-		} else if supportedSecurityTypes.contains(.tight) {
-			chosenSecurityType = .tight
+		} else if supportedSecurityTypes.contains(.none), isUnauthenticatedAccessAllowed {
+			chosenSecurityType = .none
 		} else {
 			chosenSecurityType = .invalid
 		}

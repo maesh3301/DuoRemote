@@ -48,23 +48,15 @@ extension VNCProtocol.ARDAuthentication {
 
             guard randomCredsDataSuccess else { return nil }
 
-			let usernameLength = username.utf8.count
-			let passwordLength = password.utf8.count
-
-			let maxLength = 63
-
-			// Cap length at 63 as index is 0
-			let cappedUsername = usernameLength > maxLength
-				? String(username[username.startIndex..<username.index(username.startIndex, offsetBy: maxLength)])
-				: username
-
+			// LOCAL PATCH: cap at 63 UTF-8 bytes (was 63 characters, which wrote past the 64-byte
+			// fields for multi-byte text, or indexed past the end of a short multi-byte string).
+			let cappedUsername = VNCCredentialLimit.truncated(username)
 			let cappedUsernameLength = cappedUsername.utf8.count
 
-			let cappedPassword = passwordLength > maxLength
-				? String(password[password.startIndex..<password.index(password.startIndex, offsetBy: maxLength)])
-				: password
-
+			let cappedPassword = VNCCredentialLimit.truncated(password)
 			let cappedPasswordLength = cappedPassword.utf8.count
+
+			guard cappedUsernameLength < credArraySize / 2, cappedPasswordLength < credArraySize / 2 else { return nil }
 
             // Convert username and password strings into C strings
             let usernameC = cappedUsername.utf8CString

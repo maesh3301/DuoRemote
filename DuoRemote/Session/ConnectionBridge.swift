@@ -57,7 +57,10 @@ nonisolated final class ConnectionBridge: NSObject, VNCConnectionDelegate, VNCCo
         let error = connectionState.error
         let isAuth = (error as? VNCError)?.isAuthenticationError ?? false
         let message = error.map { ($0 as? LocalizedError)?.errorDescription ?? String(describing: $0) }
-        let refused = refusedAuth.withLock { $0 }
+        // No sign-in the app accepts was offered (e.g. only "None"): report it as refused, not a wrong password.
+        var noAcceptedSignIn = false
+        if case .authentication(.clientCouldNotDecideOnSecurityType)? = error as? VNCError { noAcceptedSignIn = true }
+        let refused = refusedAuth.withLock { $0 } || noAcceptedSignIn
         let name = ["disconnected", "connecting", "connected", "disconnecting"][min(status.rawValue, 3)]
         log?("state \(name) \(message ?? "")")
         onMain { session, bridge in

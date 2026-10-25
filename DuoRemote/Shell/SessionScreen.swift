@@ -406,7 +406,7 @@ private struct FloatingChrome: View {
         case .network(let m): m
         case .closedByServer: "closed by the Mac"
         case .outsideTailscale: "this Mac isn't reached through Tailscale, so your saved password wasn't sent"
-        case .insecureAuthentication: "this Mac asked for a plain VNC password instead of a macOS sign-in, so nothing was sent. To allow it, turn on Allow outside Tailscale in Edit Mac."
+        case .insecureAuthentication: "this Mac didn't offer a macOS sign-in (it asked for a plain VNC password, or no sign-in at all), so the app didn't continue. To allow it, turn on Allow outside Tailscale in Edit Mac."
         }
     }
 }

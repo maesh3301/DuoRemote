@@ -1,3 +1,4 @@
+@preconcurrency import RoyalVNCKit
 import SwiftUI
 import os
 
@@ -21,7 +22,9 @@ struct CredentialSheet: View {
         _allowOutside = State(initialValue: host.allowOutsideTailscale)
     }
 
-    private var canConnect: Bool { !username.isEmpty && !password.isEmpty }
+    private var canConnect: Bool {
+        !username.isEmpty && !password.isEmpty && VNCCredentialLimit.fits(username) && VNCCredentialLimit.fits(password)
+    }
 
     var body: some View {
         NavigationStack {
@@ -35,6 +38,10 @@ struct CredentialSheet: View {
                         .textContentType(nil)
                 } header: {
                     Text("\(host.name) (\(host.hostname))")
+                } footer: {
+                    if !VNCCredentialLimit.fits(username) || !VNCCredentialLimit.fits(password) {
+                        ErrorText(CredentialText.tooLong)
+                    }
                 }
                 if let outsideAddress {
                     Section {
@@ -91,4 +98,8 @@ struct CredentialSheet: View {
         coordinator.credentialPrompt = nil
         coordinator.connect(target, username: username, password: password, approvedAddress: outsideAddress)
     }
+}
+
+enum CredentialText {
+    static let tooLong = "Screen Sharing accepts usernames and passwords up to 63 bytes: about 63 letters, fewer with accents or emoji."
 }

@@ -143,6 +143,7 @@ final class VNCSession {
                                               colorDepth: .depth24Bit,
                                               frameEncodings: .default)
         let connection = VNCConnection(settings: settings)
+        connection.isUnauthenticatedAccessAllowed = allowOtherAuth   // a Mac with no sign-in at all
         let bridge = ConnectionBridge(session: self, credentials: credentials, allowOtherAuth: allowOtherAuth,
                                       dirty: frameDirty, log: log)
         connection.delegate = bridge
