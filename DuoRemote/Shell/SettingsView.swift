@@ -6,6 +6,7 @@ struct SettingsView: View {
     @AppStorage("defaultInputMode") private var inputMode = InputMode.trackpad.rawValue
     @AppStorage("scrollSpeed") private var scrollSpeed = VNCSession.defaultScrollSpeed
     @AppStorage("invertScroll") private var invertScroll = false
+    @AppStorage("pointerSpeed") private var pointerSpeed = 1.0
     @AppStorage("autoCompose") private var autoCompose = true
     @AppStorage("effectsEnabled") private var effectsEnabled = true
     @AppStorage("skyTheme") private var skyTheme = true
@@ -40,6 +41,12 @@ struct SettingsView: View {
                     Picker("Default input mode", selection: $inputMode) {
                         Text("Trackpad").tag(InputMode.trackpad.rawValue)
                         Text("Direct touch").tag(InputMode.direct.rawValue)
+                    }
+                    VStack(alignment: .leading) {
+                        Text("Pointer speed: \(pointerSpeed, format: .number.precision(.fractionLength(1)))×")
+                        Slider(value: $pointerSpeed, in: 0.5...2, step: 0.1)
+                        Text("How far the pointer moves on the trackpad. Slow movements are always finer, for small targets.")
+                            .font(.footnote).foregroundStyle(.secondary)
                     }
                     Toggle("Natural scrolling", isOn: Binding(get: { !invertScroll }, set: { invertScroll = !$0 }))
                     VStack(alignment: .leading) {

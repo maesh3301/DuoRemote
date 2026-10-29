@@ -1,4 +1,5 @@
 import Testing
+import Foundation
 import CoreGraphics
 @testable import DuoRemote
 
@@ -28,16 +29,58 @@ struct TouchInterpreterTests {
         let out = t.update(touches: [0: CGPoint(x: 120, y: 100)], time: 0.05)
         guard case let .pointerDelta(d, _)? = out.first else { Issue.record("no delta"); return }
         #expect(d == CGVector(dx: 20, dy: 0))
-        #expect(t.update(touches: [:], time: 0.1).isEmpty)
+        #expect(t.update(touches: [:], time: 0.1) == [.liftOff])
+    }
+
+    @Test mutating func fingerDownAnchorsPointer() {
+        #expect(t.update(touches: [0: CGPoint(x: 100, y: 100)], time: 0) == [.pointerAnchor])
+    }
+
+    @Test mutating func pointerStartsMovingAfterThreePoints() {
+        _ = t.update(touches: [0: CGPoint(x: 100, y: 100)], time: 0)
+        #expect(t.update(touches: [0: CGPoint(x: 102, y: 100)], time: 0.03).isEmpty)
+        guard case let .pointerDelta(d, _)? = t.update(touches: [0: CGPoint(x: 104, y: 100)], time: 0.06).first else {
+            Issue.record("no delta"); return
+        }
+        #expect(d == CGVector(dx: 4, dy: 0))
+    }
+
+    @Test mutating func slowStartNeverPressesTheButton() {
+        _ = t.update(touches: [0: CGPoint(x: 100, y: 100)], time: 0)
+        #expect(t.tick(time: 0.35).isEmpty)
+        _ = t.update(touches: [0: CGPoint(x: 104, y: 100)], time: 0.4)
+        #expect(t.tick(time: 0.6).isEmpty)
+        _ = t.update(touches: [0: CGPoint(x: 110, y: 100)], time: 0.7)
+        #expect(!t.update(touches: [:], time: 0.8).contains(.buttonUp))
+    }
+
+    @Test mutating func tapThatDriftedClicksWhereThePointerWas() {
+        _ = t.update(touches: [0: CGPoint(x: 100, y: 100)], time: 0)
+        _ = t.update(touches: [0: CGPoint(x: 105, y: 101)], time: 0.05)
+        #expect(t.update(touches: [:], time: 0.1) == [.restorePointer, .click(.left, at: nil)])
+    }
+
+    @Test mutating func driftBeyondSlopIsNoTap() {
+        _ = t.update(touches: [0: CGPoint(x: 100, y: 100)], time: 0)
+        _ = t.update(touches: [0: CGPoint(x: 105, y: 100)], time: 0.03)
+        _ = t.update(touches: [0: CGPoint(x: 112, y: 100)], time: 0.06)
+        #expect(t.update(touches: [:], time: 0.1) == [.liftOff])
+    }
+
+    @Test mutating func directHoldStillTakesAThirdOfASecond() {
+        t.mode = .direct
+        _ = t.update(touches: [0: CGPoint(x: 100, y: 100)], time: 0)
+        #expect(t.tick(time: 0.31) == [.grabbed, .buttonDown(at: CGPoint(x: 100, y: 100))])
     }
 
     @Test mutating func holdThenDragIsButtonDrag() {
         _ = t.update(touches: [0: CGPoint(x: 100, y: 100)], time: 0)
         #expect(t.tick(time: 0.2).isEmpty)
-        #expect(t.tick(time: 0.31) == [.grabbed, .buttonDown(at: nil)])
-        let move = t.update(touches: [0: CGPoint(x: 140, y: 100)], time: 0.4)
+        #expect(t.tick(time: 0.31).isEmpty)
+        #expect(t.tick(time: 0.51) == [.grabbed, .buttonDown(at: nil)])
+        let move = t.update(touches: [0: CGPoint(x: 140, y: 100)], time: 0.6)
         guard case .pointerDelta? = move.first else { Issue.record("no move"); return }
-        #expect(t.update(touches: [:], time: 0.5) == [.buttonUp])
+        #expect(t.update(touches: [:], time: 0.7) == [.buttonUp])
     }
 
     @Test mutating func twoFingerTapIsRightClick() {
@@ -71,8 +114,38 @@ struct TouchInterpreterTests {
         #expect(t.update(touches: b, time: 0.05) == [.pan(CGVector(dx: 15, dy: 5))])
     }
 
-    @Test func gainRampsWithSpeed() {
-        #expect(InputController.gain(speed: 0) == 1)
+    @Test func gainIsFineWhenSlowAndRampsWithSpeed() {
+        #expect(InputController.gain(speed: 0) == 0.4)
+        #expect(InputController.gain(speed: 250) == 1)
         #expect(InputController.gain(speed: 5000) == 2.5)
+        #expect(InputController.gain(speed: 100) < InputController.gain(speed: 200))
+    }
+
+    @Test func liftOffRollIsUndone() {
+        let session = VNCSession.demo()
+        let input = InputController(session: session)
+        input.handle([.pointerAnchor, .pointerDelta(CGVector(dx: 40, dy: 0), speed: 400)])
+        let moved = session.pointer
+        Thread.sleep(forTimeInterval: InputController.liftOffWindow + 0.02)
+        input.handle([.pointerDelta(CGVector(dx: 3, dy: 2), speed: 60)])
+        #expect(session.pointer != moved)
+        input.handle([.liftOff])
+        #expect(abs(session.pointer.x - moved.x) < 0.001 && abs(session.pointer.y - moved.y) < 0.001)
+    }
+
+    @Test func fastMoveAtLiftOffStays() {
+        let session = VNCSession.demo()
+        let input = InputController(session: session)
+        let start = session.pointer
+        input.handle([.pointerAnchor, .pointerDelta(CGVector(dx: 30, dy: 0), speed: 900), .liftOff])
+        #expect(session.pointer.x > start.x)
+    }
+
+    @Test func driftedTapPutsThePointerBack() {
+        let session = VNCSession.demo()
+        let input = InputController(session: session)
+        let start = session.pointer
+        input.handle([.pointerAnchor, .pointerDelta(CGVector(dx: 5, dy: 0), speed: 100), .restorePointer])
+        #expect(session.pointer == start)
     }
 }

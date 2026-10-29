@@ -18,6 +18,12 @@ enum TouchIntent: Equatable {
     case pan(CGVector)
     case panEnded(velocity: CGVector)
     case grabbed   // hold recognised → haptic
+    /// Trackpad: a finger came down; remember the pointer so a tap can put it back.
+    case pointerAnchor
+    /// Trackpad: undo the movement since `pointerAnchor` (a tap that drifted a little).
+    case restorePointer
+    /// Trackpad: the moving finger lifted; undo the last few points of lift-off roll.
+    case liftOff
 
     enum Button: Equatable { case left, right }
 }
@@ -27,9 +33,14 @@ enum TouchIntent: Equatable {
 /// timer). Time is injected so tests can drive it.
 struct TouchInterpreter {
     struct Thresholds {
-        var slop: CGFloat = 8              // pt a finger may wander and still be a tap/hold
+        var slop: CGFloat = 8              // pt a finger may wander and still be a tap (direct: or a hold)
+        /// Trackpad: pt of travel that starts moving the pointer. Anything beyond is never a hold.
+        var trackpadMoveCommit: CGFloat = 3
         var tapMaxDuration: TimeInterval = 0.25
         var holdDuration: TimeInterval = 0.30
+        /// Trackpad: a hold needs this long without moving, so a finger that rests before a slow
+        /// start doesn't press the button.
+        var trackpadHoldDuration: TimeInterval = 0.50
         var twoFingerTapMaxDuration: TimeInterval = 0.30
         var pinchCommitLogRatio: CGFloat = 0.10
         var scrollCommitDistance: CGFloat = 10
@@ -41,7 +52,8 @@ struct TouchInterpreter {
     private enum State {
         case idle
         case oneDown(id: Int, start: CGPoint, last: CGPoint, t0: TimeInterval)
-        case oneMoving(id: Int, last: CGPoint)
+        /// `tap`: trackpad only, while the touch could still be a tap that drifted (≤ slop, short).
+        case oneMoving(id: Int, last: CGPoint, tap: (start: CGPoint, t0: TimeInterval)?)
         case holding(id: Int, last: CGPoint)
         case twoDown(ids: Set<Int>, c0: CGPoint, span0: CGFloat, t0: TimeInterval)
         case pinching(ids: Set<Int>, lastC: CGPoint, lastSpan: CGFloat)
@@ -62,6 +74,7 @@ struct TouchInterpreter {
         switch state {
         case .idle:
             begin(touches, t)
+            if mode == .trackpad, case .oneDown = state { out.append(.pointerAnchor) }
 
         case let .oneDown(id, start, _, t0):
             if n == 0 {
@@ -70,8 +83,10 @@ struct TouchInterpreter {
                 }
                 state = .idle
             } else if n == 1, let p = touches[id] {
-                if p.distance(to: start) > thresholds.slop {
-                    state = .oneMoving(id: id, last: p)
+                let commit = mode == .trackpad ? thresholds.trackpadMoveCommit : thresholds.slop
+                if p.distance(to: start) > commit {
+                    let tap = mode == .trackpad && p.distance(to: start) <= thresholds.slop ? (start, t0) : nil
+                    state = .oneMoving(id: id, last: p, tap: tap)
                     velocity.reset(p, t)
                     out += oneFingerMove(from: start, to: p, t: t)
                 } else {
@@ -81,13 +96,20 @@ struct TouchInterpreter {
                 begin(touches, t)   // a second (or third) finger joined before we committed
             }
 
-        case let .oneMoving(id, last):
+        case let .oneMoving(id, last, tap):
             if n == 1, let p = touches[id] {
                 velocity.add(p, t)
                 out += oneFingerMove(from: last, to: p, t: t)
-                state = .oneMoving(id: id, last: p)
+                let stillTap = tap.flatMap { p.distance(to: $0.start) <= thresholds.slop && t - $0.t0 <= thresholds.tapMaxDuration ? $0 : nil }
+                state = .oneMoving(id: id, last: p, tap: stillTap)
             } else {
-                if mode == .direct { out.append(.panEnded(velocity: n == 0 ? velocity.velocity : .zero)) }
+                if mode == .direct {
+                    out.append(.panEnded(velocity: n == 0 ? velocity.velocity : .zero))
+                } else if n == 0, let tap, t - tap.t0 <= thresholds.tapMaxDuration {
+                    out += [.restorePointer, .click(.left, at: nil)]
+                } else {
+                    out.append(.liftOff)
+                }
                 state = n == 0 ? .idle : .finishing
             }
 
@@ -172,7 +194,8 @@ struct TouchInterpreter {
 
     /// Call once per frame: fires the hold → button-down transition.
     mutating func tick(time t: TimeInterval) -> [TouchIntent] {
-        guard case let .oneDown(id, start, last, t0) = state, t - t0 >= thresholds.holdDuration else { return [] }
+        let hold = mode == .trackpad ? thresholds.trackpadHoldDuration : thresholds.holdDuration
+        guard case let .oneDown(id, start, last, t0) = state, t - t0 >= hold else { return [] }
         state = .holding(id: id, last: last)
         velocity.reset(last, t)
         return [.grabbed, .buttonDown(at: mode == .direct ? start : nil)]

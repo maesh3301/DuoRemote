@@ -23,6 +23,10 @@ final class InputController {
     private var lastScrollTime: CFTimeInterval = 0
     private var scrollMomentum: CGVector?
     private var panMomentum: CGVector?
+    /// Pointer when the finger came down (for a tap that drifted).
+    private var anchor: CGPoint?
+    /// Recent trackpad moves: content delta and finger travel (pt), for undoing lift-off roll.
+    private var recentMoves: [(t: CFTimeInterval, delta: CGVector, travel: CGFloat)] = []
     var onGrab: (() -> Void)?
     var onClick: (() -> Void)?
 
@@ -44,10 +48,28 @@ final class InputController {
         let vp = session.viewport
         switch intent {
         case let .pointerDelta(d, speed):
-            let g = Self.gain(speed: speed) / max(vp.scale, 0.0001)
-            let p = CGPoint(x: session.pointer.x + d.dx * g, y: session.pointer.y + d.dy * g)
-            session.movePointer(to: p)
+            let g = Self.gain(speed: speed) * Self.pointerSpeed / max(vp.scale, 0.0001)
+            let before = session.pointer
+            session.movePointer(to: CGPoint(x: before.x + d.dx * g, y: before.y + d.dy * g))
             session.viewport.follow(session.pointer)
+            let now = CACurrentMediaTime()
+            recentMoves.append((now, CGVector(dx: session.pointer.x - before.x, dy: session.pointer.y - before.y), d.length))
+            recentMoves.removeAll { now - $0.t > Self.liftOffWindow }
+        case .pointerAnchor:
+            anchor = session.pointer
+            recentMoves = []
+        case .restorePointer:
+            if let anchor { session.movePointer(to: anchor) }
+        case .liftOff:
+            // A finger rolls a little as it lifts; small travel in the last moment wasn't meant.
+            let now = CACurrentMediaTime()
+            let tail = recentMoves.filter { now - $0.t <= Self.liftOffWindow }
+            let travel = tail.reduce(0) { $0 + $1.travel }
+            if travel > 0, travel <= Self.liftOffMaxTravel {
+                let back = tail.reduce(CGVector.zero) { CGVector(dx: $0.dx - $1.delta.dx, dy: $0.dy - $1.delta.dy) }
+                session.movePointer(to: CGPoint(x: session.pointer.x + back.dx, y: session.pointer.y + back.dy))
+            }
+            recentMoves = []
         case let .pointerAt(v):
             session.movePointer(to: vp.toContent(v))
         case let .click(button, at):
@@ -122,10 +144,20 @@ final class InputController {
         return 1 + 4 * (t * t * (3 - 2 * t))
     }
 
-    /// Pointer acceleration: 1× when slow, up to 2.5× when flicking.
+    static let liftOffWindow: CFTimeInterval = 0.05
+    static let liftOffMaxTravel: CGFloat = 6
+
+    /// Settings → Pointer speed (multiplies the curve below).
+    static var pointerSpeed: CGFloat {
+        CGFloat(UserDefaults.standard.object(forKey: "pointerSpeed") as? Double ?? 1)
+    }
+
+    /// Pointer acceleration, like a Mac trackpad: 0.4× for slow, precise moves (pt/s), 1× at a
+    /// normal pace, up to 2.5× when flicking.
     static func gain(speed: CGFloat) -> CGFloat {
-        let t = min(max((speed - 200) / 1000, 0), 1)
-        return 1 + 1.5 * (t * t * (3 - 2 * t))
+        func smooth(_ x: CGFloat) -> CGFloat { let t = min(max(x, 0), 1); return t * t * (3 - 2 * t) }
+        if speed < 250 { return 0.4 + 0.6 * smooth((speed - 40) / 210) }
+        return 1 + 1.5 * smooth((speed - 250) / 1000)
     }
 }
 
