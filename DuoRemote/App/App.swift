@@ -39,6 +39,27 @@ struct DuoRemoteApp: App {
         if let i = args.firstIndex(of: "-vncSmoke"), i + 1 < args.count {
             VNCSmokeTest.run(host: args[i + 1])
         }
+        if let i = args.firstIndex(of: "-vncTrace"), i + 1 < args.count {
+            let wanted = args[i + 1].lowercased()
+            if let j = args.firstIndex(of: "-vncTraceRoute"), j + 1 < args.count {
+                SessionCoordinator.traceRoute = HostRoute(rawValue: args[j + 1])
+            }
+            ConnectTrace.isEnabled = true
+            if let host = coordinator.store.hosts.first(where: { $0.hostname.lowercased() == wanted || $0.name.lowercased() == wanted }) {
+                coordinator.connect(host)
+                // `-vncTraceRepeat`: disconnect after a while and connect again, to time a warm connect.
+                if args.contains("-vncTraceRepeat") {
+                    Task {
+                        try? await Task.sleep(for: .seconds(30))
+                        coordinator.disconnect()
+                        try? await Task.sleep(for: .seconds(3))
+                        coordinator.connect(host)
+                    }
+                }
+            } else {
+                ConnectTrace.begin("no saved Mac called \(wanted)")
+            }
+        }
         if let i = args.firstIndex(of: "-tailscaleSmoke"), i + 1 < args.count {
             VNCSmokeTest.runEmbedded(host: args[i + 1])
         }

@@ -33,7 +33,7 @@ struct HostsListView: View {
     private var store: HostStore { coordinator.store }
 
     /// Changes only when a host is added/removed or its address changes (not when `lastConnected` does).
-    private var probeKey: [String] { store.hosts.map { "\($0.id)\($0.hostname):\($0.port)" } }
+    private var probeKey: [String] { store.hosts.map { "\($0.id)\($0.hostname):\($0.port)/\($0.route.rawValue)" } }
 
     var body: some View {
         NavigationStack {

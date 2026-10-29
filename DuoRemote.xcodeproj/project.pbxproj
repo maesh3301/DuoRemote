@@ -43,6 +43,7 @@
 		86E4FCE2C84025B0D42C9185 /* TouchInterpreterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6771D12F0EE93B110D915CB /* TouchInterpreterTests.swift */; };
 		8F3837FB21DE792CEF0614C4 /* LaptopDeck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A37B830AAF73AE5BED2FFF5 /* LaptopDeck.swift */; };
 		943F2130CE2519EE33BF2FC1 /* CredentialPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48CCB6E3896D50119720786E /* CredentialPolicy.swift */; };
+		254A4154E588A2190F466501 /* ConnectTrace.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11DD3FEC493565AB880AF1B9 /* ConnectTrace.swift */; };
 		83C7C1B46169621C76896B41 /* EmbeddedTailscale.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A7A2A63581762C883A2B7B /* EmbeddedTailscale.swift */; };
 		959802152698F6CE771B24FE /* Viewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = E74BAC53DF4F213A1D1F3ABA /* Viewport.swift */; };
 		9AAC8D57A4A5572FB8936A5F /* SkyPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7DA6121FA5384F4B340D1C /* SkyPalette.swift */; };
@@ -106,6 +107,7 @@
 		40126972F4BF3D452A0250DF /* AppInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInfo.swift; sourceTree = "<group>"; };
 		4214D489F2CBE530A9C848CC /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		48CCB6E3896D50119720786E /* CredentialPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialPolicy.swift; sourceTree = "<group>"; };
+		11DD3FEC493565AB880AF1B9 /* ConnectTrace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectTrace.swift; sourceTree = "<group>"; };
 		D4A7A2A63581762C883A2B7B /* EmbeddedTailscale.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddedTailscale.swift; sourceTree = "<group>"; };
 		57EBD5898F0BCB0CD734C8D5 /* TrackpadSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackpadSurface.swift; sourceTree = "<group>"; };
 		5C64746043C8CE73C9BEA7C9 /* SkyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyTests.swift; sourceTree = "<group>"; };
@@ -270,6 +272,7 @@
 			children = (
 				18655A2EA534C0ED347AB130 /* ConnectionBridge.swift */,
 				48CCB6E3896D50119720786E /* CredentialPolicy.swift */,
+				11DD3FEC493565AB880AF1B9 /* ConnectTrace.swift */,
 				D4A7A2A63581762C883A2B7B /* EmbeddedTailscale.swift */,
 				BFFF502B3CD6E4783786B563 /* Diagnostics.swift */,
 				0605BB70B86B445EAB32428C /* KeyMapping.swift */,
@@ -452,6 +455,7 @@
 				864CA9A69362985126D8F856 /* ComposeBox.swift in Sources */,
 				48036388522C75EE9840E66E /* ConnectionBridge.swift in Sources */,
 				943F2130CE2519EE33BF2FC1 /* CredentialPolicy.swift in Sources */,
+				254A4154E588A2190F466501 /* ConnectTrace.swift in Sources */,
 				83C7C1B46169621C76896B41 /* EmbeddedTailscale.swift in Sources */,
 				B1B95AE30D9DDBFF6E156E4A /* CredentialSheet.swift in Sources */,
 				1113A1B739C44C17220F005A /* DeckEffects.swift in Sources */,

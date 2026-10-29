@@ -88,6 +88,10 @@ final class EmbeddedTailscale {
     private(set) var ownAddress: String?
     private(set) var peers: [EmbeddedTailnetStatus.Node] = []
 
+    /// Running and the coordination server has sent the peer list. A node that has just started
+    /// reports Running from its saved state a moment before it knows any peers.
+    var hasPeerList: Bool { state == .running && !peers.isEmpty }
+
     /// Remembered so the node starts with the app once the user has turned it on.
     var isEnabled: Bool { UserDefaults.standard.bool(forKey: Self.enabledKey) }
 
@@ -174,7 +178,7 @@ final class EmbeddedTailscale {
         pollTask = Task {
             while !Task.isCancelled {
                 await refresh()
-                try? await Task.sleep(for: state == .running ? .seconds(15) : .seconds(1))
+                try? await Task.sleep(for: hasPeerList ? .seconds(15) : .seconds(1))
             }
         }
     }
@@ -215,28 +219,37 @@ final class EmbeddedTailscale {
     // MARK: Connecting
 
     /// The checked Tailscale address of the Mac called `hostname`. Starts the node if it's turned on
-    /// but not running yet, and waits briefly for it.
+    /// but not running yet, and waits briefly for it and its peer list.
     func route(to hostname: String) async -> Result<String, Problem> {
         guard isEnabled else { return .failure(.notSignedIn) }
         if node == nil { start() }
+        await refresh()
         let deadline = ContinuousClock.now + .seconds(15)
-        while state != .running, state != .needsLogin, ContinuousClock.now < deadline, !Task.isCancelled {
-            try? await Task.sleep(for: .milliseconds(250))
+        while !hasPeerList, state != .needsLogin, ContinuousClock.now < deadline, !Task.isCancelled {
+            try? await Task.sleep(for: .milliseconds(200))
             await refresh()
         }
         guard state == .running else { return .failure(.notSignedIn) }
-        await refresh()
+        if hasPeerList, ContinuousClock.now < deadline { await refresh() }
         guard let peer = EmbeddedTailnet.peer(named: hostname, in: peers),
               let address = EmbeddedTailnet.address(of: peer) else { return .failure(.notFound(hostname)) }
         if peer.online == false { return .failure(.offline(hostname)) }
         return .success(address)
     }
 
-    /// Whether the Mac called `hostname` is online, per the tunnel's peer list.
-    func isOnline(_ hostname: String) async -> Bool {
-        guard isEnabled else { return false }
-        if case .success = await route(to: hostname) { return true }
-        return false
+    /// The Mac's status from the peer list as it stands (observable, so the hosts screen follows
+    /// the node starting up): checking until the list has arrived.
+    func reachability(of hostname: String) -> ReachabilityState {
+        guard isEnabled else { return .offline }
+        switch state {
+        case .starting: return .checking
+        case .running where !hasPeerList: return .checking
+        case .running:
+            guard let peer = EmbeddedTailnet.peer(named: hostname, in: peers),
+                  EmbeddedTailnet.address(of: peer) != nil else { return .offline }
+            return peer.online == false ? .offline : .online
+        case .off, .needsLogin, .failed: return .offline
+        }
     }
 
     /// Opens a TCP connection to `address` through the node, for `VNCConnection.socketProvider`.
@@ -259,11 +272,4 @@ nonisolated extension EmbeddedTailscale.Problem: LocalizedError {
 private nonisolated struct QuietSink: LogSink {
     var logFileHandle: Int32? { nil }
     func log(_ message: String) {}
-}
-
-/// Reachability for Macs reached through built-in Tailscale: the tunnel's peer list, not a TCP probe.
-nonisolated struct EmbeddedReachabilityProbe: ReachabilityProbe {
-    func isReachable(hostname: String, port: UInt16) async -> Bool {
-        await EmbeddedTailscale.shared.isOnline(hostname)
-    }
 }

@@ -63,6 +63,7 @@ nonisolated final class ConnectionBridge: NSObject, VNCConnectionDelegate, VNCCo
         let refused = refusedAuth.withLock { $0 } || noAcceptedSignIn
         let name = ["disconnected", "connecting", "connected", "disconnecting"][min(status.rawValue, 3)]
         log?("state \(name) \(message ?? "")")
+        ConnectTrace.mark("state \(name) \(message ?? "")")
         onMain { session, bridge in
             session.bridge(bridge, didChange: status, authFailed: isAuth, authRefused: refused, message: message)
         }
@@ -72,6 +73,7 @@ nonisolated final class ConnectionBridge: NSObject, VNCConnectionDelegate, VNCCo
                     credentialFor authenticationType: VNCAuthenticationType,
                     completion: @escaping (VNCCredential?) -> Void) {
         log?("auth requested: \(authenticationType) requiresUsername=\(authenticationType.requiresUsername)")
+        ConnectTrace.mark("auth requested")
         guard let credentials else { completion(nil); return }
         guard CredentialPolicy.mayAnswer(authenticationType, allowOutsideTailscale: allowOtherAuth) else {
             log?("auth refused: not a macOS sign-in, password not sent")
@@ -96,6 +98,7 @@ nonisolated final class ConnectionBridge: NSObject, VNCConnectionDelegate, VNCCo
 
     func connection(_ connection: VNCConnection, didUpdateFramebuffer framebuffer: VNCFramebuffer,
                     x: UInt16, y: UInt16, width: UInt16, height: UInt16) {
+        ConnectTrace.once("first framebuffer rect decoded")
         dirty.set()
     }
 
@@ -114,6 +117,7 @@ nonisolated final class ConnectionBridge: NSObject, VNCConnectionDelegate, VNCCo
     private func publish(_ framebuffer: VNCFramebuffer) {
         let size = framebuffer.cgSize
         log?("framebuffer \(Int(size.width))×\(Int(size.height))")
+        ConnectTrace.mark("framebuffer \(Int(size.width))×\(Int(size.height)) created")
         guard let surface = framebuffer.ioSurface else { return }
         let box = SurfaceBox(surface: surface, size: size)
         dirty.set()

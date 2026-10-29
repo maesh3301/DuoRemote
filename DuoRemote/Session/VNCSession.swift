@@ -144,7 +144,21 @@ final class VNCSession {
                                               isClipboardRedirectionEnabled: false,
                                               colorDepth: .depth24Bit,
                                               frameEncodings: .default)
-        let connection = VNCConnection(settings: settings)
+        let connection: VNCConnection
+        #if DEBUG
+        if ConnectTrace.isEnabled {
+            let forward: VNCCustomLogger.LogHandler = { ConnectTrace.library($0) }
+            let logger = VNCCustomLogger(logDebugHandler: forward, logInfoHandler: forward,
+                                         logWarningHandler: forward, logErrorHandler: forward)
+            logger.isDebugLoggingEnabled = true
+            connection = VNCConnection(settings: settings, logger: logger)
+            connection.logger.isDebugLoggingEnabled = true
+        } else {
+            connection = VNCConnection(settings: settings)
+        }
+        #else
+        connection = VNCConnection(settings: settings)
+        #endif
         connection.isUnauthenticatedAccessAllowed = allowOtherAuth   // a Mac with no sign-in at all
         connection.socketProvider = socket
         if socket != nil { log?("via built-in Tailscale") }
@@ -156,6 +170,7 @@ final class VNCSession {
         self.bridge = bridge
         userDisconnecting = false
         status = .connecting
+        ConnectTrace.mark("VNCConnection.connect() to \(address ?? hostname)\(socket != nil ? " via built-in Tailscale" : "")")
         connection.connect()
     }
 

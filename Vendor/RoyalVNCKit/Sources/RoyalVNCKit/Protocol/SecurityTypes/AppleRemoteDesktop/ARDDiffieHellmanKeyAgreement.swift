@@ -4,6 +4,8 @@ import FoundationEssentials
 import Foundation
 #endif
 
+import Security
+
 extension VNCProtocol.ARDAuthentication {
 	struct DiffieHellmanKeyAgreement {
 		let publicKey: Data
@@ -46,6 +48,12 @@ private extension VNCProtocol.ARDAuthentication.DiffieHellmanKeyAgreement {
 		let privateKey: Data
 	}
 
+	// LOCAL PATCH: a 512-bit private exponent instead of one as long as the prime (macOS offers
+	// a 4096-bit group). Each modExp costs time in proportion to the exponent's length, and with
+	// CryptoSwift's BigUInt the full-length exponent took ~0.3 s per modExp on an iPhone (14 s in
+	// an unoptimised build). 512 bits keeps the exponent well above twice the group's strength.
+	static let privateExponentBytes = 64
+
 	static func generateKeyPair(generator: Data,
 								prime: Data,
 								keyLength: Int) -> KeyPair? {
@@ -59,11 +67,16 @@ private extension VNCProtocol.ARDAuthentication.DiffieHellmanKeyAgreement {
 
 		// Generate DH private key
 		repeat {
-			let randSuccess = bigPrivKey.rand(range: bigPrime)
+			var random = Data(count: min(privateExponentBytes, keyLength))
+			let status = random.withUnsafeMutableBytes {
+				SecRandomCopyBytes(kSecRandomDefault, $0.count, $0.baseAddress!)
+			}
 
-			guard randSuccess else {
+			guard status == errSecSuccess, let candidate = BigNum(data: random) else {
 				return nil
 			}
+
+			bigPrivKey.set(candidate)
 		} while bigPrivKey.isZero
 
 		let modSuccess = BigNum.modExp(y: bigPubKey,
@@ -75,14 +88,10 @@ private extension VNCProtocol.ARDAuthentication.DiffieHellmanKeyAgreement {
 			return nil
 		}
 
-		// Check key lengths of generated private and public DH keys
-		guard bigPrivKey.bytesCount == keyLength,
-			  bigPubKey.bytesCount == keyLength else {
-			return nil
-		}
-
+		// LOCAL PATCH: pad to the key length instead of failing when the value happens to start
+		// with a zero byte (which made 1 in 256 sign-ins fail).
 		guard let privKey = bigPrivKey.bigEndianData(),
-			  let pubKey = bigPubKey.bigEndianData() else {
+			  let pubKey = bigPubKey.bigEndianData().flatMap({ $0.leftPadded(to: keyLength) }) else {
 			return nil
 		}
 
@@ -112,10 +121,19 @@ private extension VNCProtocol.ARDAuthentication.DiffieHellmanKeyAgreement {
 			return nil
 		}
 
-		guard let sharedKey = bigSharedKey.bigEndianData() else {
+		// LOCAL PATCH: the server hashes the secret at the prime's full length; pad to match.
+		guard let sharedKey = bigSharedKey.bigEndianData()?.leftPadded(to: prime.count) else {
 			return nil
 		}
 
 		return sharedKey
+	}
+}
+
+private extension Data {
+	/// Big-endian `self` with leading zero bytes up to `length`; nil if it's already longer.
+	func leftPadded(to length: Int) -> Data? {
+		guard count <= length else { return nil }
+		return Data(count: length - count) + self
 	}
 }

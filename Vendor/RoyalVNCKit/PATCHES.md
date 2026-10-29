@@ -28,3 +28,8 @@ Only `Sources/{RoyalVNCKit,RoyalVNCKitC,Z,d3des}` and `LICENSE` were copied. Eve
    Tailscale tunnel returns a connected descriptor) instead of NWConnection dialling the hostname. `connection` is now
    `any NetworkConnection` so it can be either. The descriptor connection honours the 15-second connect timeout, sets
    `SO_NOSIGPIPE`, and `cancel()` shuts the socket down to wake blocked reads.
+9. ARD key agreement (`ARDDiffieHellmanKeyAgreement.swift`, `Encryption/BigNum.swift`): the private exponent was as long
+   as the prime (macOS offers a 4096-bit group), and CryptoSwift's BigUInt took ~0.6 s for the two modExps on an
+   iPhone (~14 s in an unoptimised build). It is now 512 random bits from `SecRandomCopyBytes` (~0.1 s), still far
+   above twice the group's strength. The public key and shared secret are left-padded to the key length instead of
+   failing (or hashing the wrong bytes) when they start with a zero byte, which made about 1 in 128 sign-ins fail.

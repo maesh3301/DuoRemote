@@ -38,6 +38,11 @@ extension BigNum {
         return .init(count)
     }
 
+    // LOCAL PATCH: for the ARD private key, which is now drawn from SecRandomCopyBytes.
+    func set(_ other: BigNum) {
+        self.bigInt = other.bigInt
+    }
+
     func rand(range: BigNum) -> Bool {
         self.bigInt = CS.BigUInt.randomInteger(lessThan: range.bigInt)
         

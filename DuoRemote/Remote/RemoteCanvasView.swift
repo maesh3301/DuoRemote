@@ -148,6 +148,7 @@ final class RemoteCanvasView: UIView, SessionDisplay {
         session.flushPointer()
 
         if session.frameDirty.testAndClear() {
+            ConnectTrace.once("canvas: first frame drawn")
             needsRender = true
             lastScreenChange = now
         }

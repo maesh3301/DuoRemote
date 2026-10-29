@@ -47,31 +47,31 @@ enum ReachabilityState: Equatable {
 final class ReachabilityModel {
     private(set) var states: [UUID: ReachabilityState] = [:]
     @ObservationIgnored private let probe: any ReachabilityProbe
-    /// For Macs reached through built-in Tailscale, whose addresses the system can't connect to.
-    @ObservationIgnored private let embeddedProbe: any ReachabilityProbe
     @ObservationIgnored private var task: Task<Void, Never>?
 
-    init(probe: any ReachabilityProbe = TCPReachabilityProbe(),
-         embeddedProbe: any ReachabilityProbe = EmbeddedReachabilityProbe()) {
+    init(probe: any ReachabilityProbe = TCPReachabilityProbe()) {
         self.probe = probe
-        self.embeddedProbe = embeddedProbe
     }
 
-    func state(for host: Host) -> ReachabilityState { states[host.id] ?? .checking }
+    /// Macs reached through built-in Tailscale aren't probed: their status follows the node's peer
+    /// list, live (the system can't connect to them, and the list arrives after the node starts).
+    func state(for host: Host) -> ReachabilityState {
+        if host.route == .embeddedTailscale { return EmbeddedTailscale.shared.reachability(of: host.hostname) }
+        return states[host.id] ?? .checking
+    }
 
     /// Probes every host concurrently, cancelling any run in flight.
     @discardableResult
     func refresh(_ hosts: [Host]) -> Task<Void, Never> {
         task?.cancel()
-        for host in hosts { states[host.id] = .checking }
+        let probed = hosts.filter { $0.route != .embeddedTailscale }
+        for host in probed { states[host.id] = .checking }
         let probe = probe
-        let embeddedProbe = embeddedProbe
         let new = Task { [weak self] in
+            if probed.count < hosts.count { await EmbeddedTailscale.shared.refresh() }
             await withTaskGroup(of: (UUID, Bool).self) { group in
-                for host in hosts {
-                    let p = host.route == .embeddedTailscale ? embeddedProbe : probe
-                    let (id, hostname, port) = (host.id, host.hostname, host.port)
-                    group.addTask { (id, await p.isReachable(hostname: hostname, port: port)) }
+                for host in probed {
+                    group.addTask { (host.id, await probe.isReachable(hostname: host.hostname, port: host.port)) }
                 }
                 for await (id, ok) in group {
                     if Task.isCancelled { return }

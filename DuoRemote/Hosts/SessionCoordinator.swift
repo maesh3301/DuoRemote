@@ -53,6 +53,11 @@ final class SessionCoordinator {
     @ObservationIgnored private var resumeHost: Host?
     @ObservationIgnored private var observationGeneration = 0
 
+    #if DEBUG
+    /// `-vncTraceRoute`: connect this way regardless of the saved setting (not saved).
+    static var traceRoute: HostRoute?
+    #endif
+
     init(store: HostStore) {
         self.store = store
     }
@@ -107,8 +112,12 @@ final class SessionCoordinator {
     /// before a password goes out.
     private func startConnect(_ requested: Host, given: Credentials?) {
         cancelTasks()
-        let host = store.host(withID: requested.id) ?? requested
+        var host = store.host(withID: requested.id) ?? requested
         lookingUpHostID = host.id
+        #if DEBUG
+        if let forced = Self.traceRoute { host.route = forced }
+        #endif
+        ConnectTrace.begin("startConnect \(host.hostname) route=\(host.route.rawValue)")
         connectTask = Task {
             defer { if !Task.isCancelled { lookingUpHostID = nil } }
             let route: TailnetRoute
@@ -121,6 +130,7 @@ final class SessionCoordinator {
             } else {
                 route = await Tailnet.route(to: host.hostname, port: host.port)
             }
+            ConnectTrace.mark("route lookup → \(route)\(embeddedProblem.map { " (\($0.message))" } ?? "")")
             guard !Task.isCancelled else { return }
             var resolved = given
             if resolved == nil, !host.username.isEmpty {
@@ -129,6 +139,7 @@ final class SessionCoordinator {
                     resolved = Credentials(username: host.username, password: password)
                 }
             }
+            ConnectTrace.mark("credentials ready (keychain read: \(given == nil))")
             guard !Task.isCancelled else { return }
             let outside: String? = if case .outside(let address) = route { address } else { nil }
             guard let resolved else {
