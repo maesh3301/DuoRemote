@@ -28,6 +28,7 @@ struct DuoRemoteApp: App {
             .task {
                 await coordinator.store.tidyKeychain()
                 applyLaunchArguments()
+                coordinator.warmUpBuiltInTailscale()
             }
         }
     }
@@ -45,8 +46,15 @@ struct DuoRemoteApp: App {
                 SessionCoordinator.traceRoute = HostRoute(rawValue: args[j + 1])
             }
             ConnectTrace.isEnabled = true
+            EmbeddedTailscale.warmUpDisabled = args.contains("-noWarmUp")
+            ConnectTrace.begin("launch")
             if let host = coordinator.store.hosts.first(where: { $0.hostname.lowercased() == wanted || $0.name.lowercased() == wanted }) {
-                coordinator.connect(host)
+                // `-vncTraceDelay <s>`: connect a few seconds after launch, like a person would.
+                let delay = args.firstIndex(of: "-vncTraceDelay").flatMap { $0 + 1 < args.count ? Double(args[$0 + 1]) : nil } ?? 0
+                Task {
+                    try? await Task.sleep(for: .seconds(delay))
+                    coordinator.connect(host)
+                }
                 // `-vncTraceRepeat`: disconnect after a while and connect again, to time a warm connect.
                 if args.contains("-vncTraceRepeat") {
                     Task {

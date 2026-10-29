@@ -222,6 +222,17 @@ final class EmbeddedTailscale {
     /// but not running yet, and waits briefly for it and its peer list.
     func route(to hostname: String) async -> Result<String, Problem> {
         guard isEnabled else { return .failure(.notSignedIn) }
+        await waitForPeerList()
+        guard state == .running else { return .failure(.notSignedIn) }
+        guard let peer = EmbeddedTailnet.peer(named: hostname, in: peers),
+              let address = EmbeddedTailnet.address(of: peer) else { return .failure(.notFound(hostname)) }
+        if peer.online == false { return .failure(.offline(hostname)) }
+        return .success(address)
+    }
+
+    /// Starts the node if needed and waits (up to 15 s) until it is signed out or has its peer list,
+    /// then reads the status once more so the list is current.
+    private func waitForPeerList() async {
         if node == nil { start() }
         await refresh()
         let deadline = ContinuousClock.now + .seconds(15)
@@ -229,12 +240,64 @@ final class EmbeddedTailscale {
             try? await Task.sleep(for: .milliseconds(200))
             await refresh()
         }
-        guard state == .running else { return .failure(.notSignedIn) }
-        if hasPeerList, ContinuousClock.now < deadline { await refresh() }
-        guard let peer = EmbeddedTailnet.peer(named: hostname, in: peers),
-              let address = EmbeddedTailnet.address(of: peer) else { return .failure(.notFound(hostname)) }
-        if peer.online == false { return .failure(.offline(hostname)) }
-        return .success(address)
+        if hasPeerList { await refresh() }
+    }
+
+    // MARK: Warming up
+
+    @ObservationIgnored private var warmedAt: [String: ContinuousClock.Instant] = [:]
+    #if DEBUG
+    /// `-noWarmUp`, to time a connect without it.
+    static var warmUpDisabled = false
+    #endif
+
+    /// Pings these Macs through the node, so the next connect finds the direct path and a
+    /// WireGuard session already set up instead of starting over Tailscale's relays. A few small
+    /// packets per online Mac, at most every 30 s; the path goes cold after about a minute idle.
+    func warmUp(_ hostnames: [String]) async {
+        #if DEBUG
+        if Self.warmUpDisabled { return }
+        #endif
+        guard isEnabled, !hostnames.isEmpty else { return }
+        await waitForPeerList()
+        guard hasPeerList, let node else { return }
+        let now = ContinuousClock.now
+        var targets: [String] = []
+        for name in hostnames {
+            guard let peer = EmbeddedTailnet.peer(named: name, in: peers), peer.online != false,
+                  let address = EmbeddedTailnet.address(of: peer), !targets.contains(address) else { continue }
+            if let last = warmedAt[address], now - last < .seconds(30) { continue }
+            warmedAt[address] = now
+            targets.append(address)
+        }
+        guard !targets.isEmpty, let loopback = try? await node.loopback() else { return }
+        ConnectTrace.mark("warm-up: pinging \(targets.count) Mac(s)")
+        await withTaskGroup(of: Void.self) { group in
+            for address in targets { group.addTask { await Self.ping(address, via: loopback) } }
+        }
+    }
+
+    /// A disco ping finds the direct path; a TSMP ping goes through WireGuard and sets up its session.
+    nonisolated private static func ping(_ address: String, via loopback: TailscaleNode.LoopbackConfig) async {
+        for type in ["disco", "TSMP"] {
+            var components = URLComponents()
+            components.scheme = "http"
+            components.host = loopback.ip
+            components.port = loopback.port
+            components.path = "/localapi/v0/ping"
+            components.queryItems = [URLQueryItem(name: "ip", value: address), URLQueryItem(name: "type", value: type)]
+            guard let url = components.url else { return }
+            var request = URLRequest(url: url, timeoutInterval: 5)
+            request.httpMethod = "POST"
+            request.setValue("Basic " + Data("tsnet:\(loopback.localAPIKey)".utf8).base64EncodedString(),
+                             forHTTPHeaderField: "Authorization")
+            request.setValue("localapi", forHTTPHeaderField: "Sec-Tailscale")
+            let start = ContinuousClock.now
+            let response = try? await URLSession.shared.data(for: request)
+            let ok = (response?.1 as? HTTPURLResponse)?.statusCode == 200
+            ConnectTrace.mark("warm-up: \(type) ping \(ok ? "ok" : "failed") in \(ContinuousClock.now - start)")
+            if !ok { return }
+        }
     }
 
     /// The Mac's status from the peer list as it stands (observable, so the hosts screen follows

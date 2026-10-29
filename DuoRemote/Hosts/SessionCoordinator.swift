@@ -273,8 +273,16 @@ final class SessionCoordinator {
 
     // MARK: Scene lifecycle
 
+    /// Warms built-in Tailscale's path to the Macs that use it (see `EmbeddedTailscale.warmUp`).
+    func warmUpBuiltInTailscale() {
+        let names = store.hosts.filter { $0.route == .embeddedTailscale }.map(\.hostname)
+        guard !names.isEmpty else { return }
+        Task { await EmbeddedTailscale.shared.warmUp(names) }
+    }
+
     func scenePhaseChanged(_ newPhase: ScenePhase) {
         phase = newPhase
+        if newPhase == .active { warmUpBuiltInTailscale() }
         switch newPhase {
         case .background:
             retryTask?.cancel()
