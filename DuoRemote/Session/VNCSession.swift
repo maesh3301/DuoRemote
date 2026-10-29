@@ -292,6 +292,7 @@ final class VNCSession {
 
     /// Presses a mouse button with the latched/locked modifiers held until `buttonUp`.
     func buttonDown(_ button: VNCMouseButton) {
+        ConnectTrace.mark("mouse: \(button) DOWN at \(wirePointer)")
         flushPointer()
         heldModifiers = modifiers.consume()
         heldModifiers.forEach { connection?.keyDown($0) }
@@ -303,6 +304,7 @@ final class VNCSession {
     }
 
     func buttonUp(_ button: VNCMouseButton) {
+        ConnectTrace.mark("mouse: \(button) up")
         flushPointer()
         let (x, y) = wirePointer
         connection?.mouseButtonUp(button, x: x, y: y)

@@ -350,6 +350,7 @@ private struct DeckClickZone: View {
                 .onChanged { _ in
                     guard !down else { return }
                     down = true
+                    ConnectTrace.mark("input: deck click zone \(title) down")
                     session.buttonDown(button)
                     session.display?.viewportDidChange()
                 }

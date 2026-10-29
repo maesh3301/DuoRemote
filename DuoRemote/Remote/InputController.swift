@@ -45,6 +45,7 @@ final class InputController {
     }
 
     private func handle(_ intent: TouchIntent) {
+        if case .pointerDelta = intent {} else { ConnectTrace.mark("input: \(intent)") }
         let vp = session.viewport
         switch intent {
         case let .pointerDelta(d, speed):

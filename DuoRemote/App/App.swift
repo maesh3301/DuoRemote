@@ -40,6 +40,11 @@ struct DuoRemoteApp: App {
         if let i = args.firstIndex(of: "-vncSmoke"), i + 1 < args.count {
             VNCSmokeTest.run(host: args[i + 1])
         }
+        // `-inputTrace`: log touch intents and mouse buttons as `[trace]` lines, without connecting.
+        if args.contains("-inputTrace") {
+            ConnectTrace.isEnabled = true
+            ConnectTrace.begin("input trace")
+        }
         if let i = args.firstIndex(of: "-vncTrace"), i + 1 < args.count {
             let wanted = args[i + 1].lowercased()
             if let j = args.firstIndex(of: "-vncTraceRoute"), j + 1 < args.count {
