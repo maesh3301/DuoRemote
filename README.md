@@ -42,6 +42,7 @@ It's designed to work over [Tailscale](https://tailscale.com) or a network you t
 - **Look and feel.** Deck colours follow the sky at your location (no location permission; estimated from the time zone), with a gentle shimmer, and stars at night. Connect, reconnect and click effects. Turn everything off with the ☀/☾ button or in Settings.
 - **Scroll speed.** A default in Settings, and a per-Mac override from ••• → Scroll speed while connected.
 - **iPad.** Works with an iPad keyboard's trackpad or a mouse: the Mac's pointer follows yours, clicks and right-clicks are real button presses, and two-finger scrolling and pinching work as you'd expect.
+- **Built-in Tailscale.** Optional, per Mac: DuoRemote joins your tailnet as its own device (`duoremote`, signed in through the browser) and connects through that, so the Tailscale app's VPN can stay off. Turn it on in Settings → Built-in Tailscale, then choose it under Edit Mac → Connect through.
 - **Hosts.** Saved Macs with live online status, Keychain passwords, and automatic reconnect after the phone sleeps or the connection drops.
 - **Diagnostics.** ••• → Connection log; crash and hang reports (MetricKit) shareable from the hosts screen.
 
@@ -57,8 +58,9 @@ It's designed to work over [Tailscale](https://tailscale.com) or a network you t
 - macOS Screen Sharing does not encrypt the screen contents or your keystrokes beyond the sign-in. Use Tailscale or a network you trust.
 - The app cannot verify the identity of the Mac it connects to. If you connect outside Tailscale, a fake server on that network could capture your Mac's password.
 - A saved password is sent automatically only when the Mac is reached through Tailscale (its name resolves to Tailscale addresses that are routed through the Tailscale tunnel), and only to a macOS sign-in. Otherwise the app warns and asks first. "Allow outside Tailscale" in Edit Mac turns this off for one Mac, and also allows Macs that ask for a plain VNC password.
+- With built-in Tailscale, the Mac's name is looked up only among the devices in your tailnet, and the app connects to that Tailscale address through its own tunnel; it never falls back to the phone's network. A saved password is sent automatically over it, as over the Tailscale app.
 - Passwords are stored only in this iPhone's Keychain.
-- No accounts, no analytics, no servers. The app talks only to the Macs you add.
+- No accounts, no analytics, no servers. The app talks only to the Macs you add. Built-in Tailscale also talks to Tailscale's coordination server, like any Tailscale device; its keys stay in the app's own storage (not backed up), and its logs are not uploaded to Tailscale.
 - The app reads the iPhone clipboard only when you tap Paste, and iOS asks first ("Allow Paste"). Text from the Mac's clipboard and Copy text from screen's Copy all stay on this iPhone (no Handoff) and expire after 10 minutes; Live Text's own Copy menu works like any other copy.
 - Copy text from screen runs Live Text on the phone; the snapshot never leaves it.
 - The app switcher shows a blank cover instead of the app, including any open sheet.
@@ -83,6 +85,14 @@ APP_BUNDLE_ID = com.yourname.duoremote
 ```
 
 To try it without a device, choose any iOS 27.1+ simulator as the run destination; the simulator needs no signing.
+
+Built-in Tailscale needs TailscaleKit, which isn't committed (it's large). Build it once before opening the project; this needs Go (`brew install go`):
+
+```
+scripts/build-tailscalekit.sh
+```
+
+It builds a pinned [libtailscale](https://github.com/tailscale/libtailscale) into `Vendor/TailscaleKit/`, with one addition (`scripts/libtailscale/duoremote_nologs.go`) that turns off log uploads.
 
 Run the tests with **Product → Test** (⌘U). They use Swift Testing and need no network or Mac.
 

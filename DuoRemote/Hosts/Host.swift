@@ -15,6 +15,9 @@ struct Host: Identifiable, Codable, Hashable {
     /// Send the password even when the Mac isn't reached through Tailscale, or asks for a plain
     /// VNC password instead of a macOS sign-in.
     var allowOutsideTailscale = false
+    /// How the Mac is reached: the system's network (the Tailscale app, or a local network) or
+    /// DuoRemote's built-in Tailscale.
+    var route: HostRoute = .system
 
     init(id: UUID = UUID(), name: String, hostname: String, port: UInt16 = 5900, username: String,
          symbol: String? = nil, lastConnected: Date? = nil) {
@@ -38,9 +41,15 @@ struct Host: Identifiable, Codable, Hashable {
         lastConnected = try c.decodeIfPresent(Date.self, forKey: .lastConnected)
         scrollSpeed = try c.decodeIfPresent(Double.self, forKey: .scrollSpeed)
         allowOutsideTailscale = try c.decodeIfPresent(Bool.self, forKey: .allowOutsideTailscale) ?? false
+        route = (try? c.decodeIfPresent(HostRoute.self, forKey: .route)) ?? .system
     }
 
     var symbolName: String { symbol ?? HostSymbol.defaultName }
+}
+
+enum HostRoute: String, Codable, CaseIterable {
+    case system
+    case embeddedTailscale
 }
 
 /// The Mac icons offered in the editor.

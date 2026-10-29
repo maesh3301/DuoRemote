@@ -55,6 +55,8 @@ struct SettingsView: View {
                     Text("Natural scrolling moves content with your finger. Changes apply to the next connection.")
                 }
 
+                BuiltInTailscaleSection()
+
                 Section("Privacy") {
                     Label("Passwords stay in this \(AppInfo.device)'s Keychain.", systemImage: "key.fill")
                     Label("Connections go straight to your Macs.", systemImage: "arrow.left.arrow.right")
@@ -73,6 +75,53 @@ struct SettingsView: View {
                     Button("Done", systemImage: "checkmark") { dismiss() }
                 }
             }
+        }
+    }
+}
+
+/// DuoRemote's own Tailscale node: on/off, sign-in and status.
+private struct BuiltInTailscaleSection: View {
+    @State private var confirmSignOut = false
+    private let tailscale = EmbeddedTailscale.shared
+
+    var body: some View {
+        Section {
+            switch tailscale.state {
+            case .off:
+                Button("Turn On and Sign In", systemImage: "network.badge.shield.half.filled") {
+                    tailscale.start(openLogin: true)
+                }
+            case .starting:
+                LabeledContent("Status") { ProgressView() }
+            case .needsLogin:
+                LabeledContent("Status", value: "Not signed in")
+                Button("Sign In with Tailscale", systemImage: "person.badge.key") {
+                    tailscale.start(openLogin: true)
+                }
+                .disabled(tailscale.loginURL == nil)
+            case .running:
+                LabeledContent("Status", value: "Connected")
+                if let address = tailscale.ownAddress {
+                    LabeledContent("This \(AppInfo.device)", value: address).textSelection(.enabled)
+                }
+            case .failed(let message):
+                LabeledContent("Status", value: message)
+                Button("Try Again", systemImage: "arrow.clockwise") { tailscale.start(openLogin: true) }
+            }
+            if tailscale.state != .off {
+                Button("Sign Out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
+                    confirmSignOut = true
+                }
+            }
+        } header: {
+            Text("Built-in Tailscale")
+        } footer: {
+            Text("Lets DuoRemote reach your Macs through Tailscale on its own, without the Tailscale app's VPN. It joins your tailnet as a device called duoremote. Choose it per Mac under Edit Mac → Connect through. iOS asks to find devices on your local network so it can connect directly when you're at home.")
+        }
+        .confirmationDialog("Sign out of built-in Tailscale?", isPresented: $confirmSignOut, titleVisibility: .visible) {
+            Button("Sign Out", role: .destructive) { Task { await tailscale.signOut() } }
+        } message: {
+            Text("Macs set to built-in Tailscale won't connect until you sign in again. Remove duoremote from the Tailscale admin console too.")
         }
     }
 }

@@ -47,10 +47,14 @@ enum ReachabilityState: Equatable {
 final class ReachabilityModel {
     private(set) var states: [UUID: ReachabilityState] = [:]
     @ObservationIgnored private let probe: any ReachabilityProbe
+    /// For Macs reached through built-in Tailscale, whose addresses the system can't connect to.
+    @ObservationIgnored private let embeddedProbe: any ReachabilityProbe
     @ObservationIgnored private var task: Task<Void, Never>?
 
-    init(probe: any ReachabilityProbe = TCPReachabilityProbe()) {
+    init(probe: any ReachabilityProbe = TCPReachabilityProbe(),
+         embeddedProbe: any ReachabilityProbe = EmbeddedReachabilityProbe()) {
         self.probe = probe
+        self.embeddedProbe = embeddedProbe
     }
 
     func state(for host: Host) -> ReachabilityState { states[host.id] ?? .checking }
@@ -61,10 +65,13 @@ final class ReachabilityModel {
         task?.cancel()
         for host in hosts { states[host.id] = .checking }
         let probe = probe
+        let embeddedProbe = embeddedProbe
         let new = Task { [weak self] in
             await withTaskGroup(of: (UUID, Bool).self) { group in
                 for host in hosts {
-                    group.addTask { (host.id, await probe.isReachable(hostname: host.hostname, port: host.port)) }
+                    let p = host.route == .embeddedTailscale ? embeddedProbe : probe
+                    let (id, hostname, port) = (host.id, host.hostname, host.port)
+                    group.addTask { (id, await p.isReachable(hostname: hostname, port: port)) }
                 }
                 for await (id, ok) in group {
                     if Task.isCancelled { return }

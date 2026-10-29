@@ -31,3 +31,6 @@ Config/Local.xcconfig
 .claude/
 .idea/
 .vscode/
+
+# Built by scripts/build-tailscalekit.sh
+Vendor/TailscaleKit/TailscaleKit.xcframework/

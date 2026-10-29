@@ -6,6 +6,9 @@ import Foundation
 nonisolated enum TailnetRoute: Equatable, Sendable {
     /// Every address is a Tailscale address that leaves through the Tailscale tunnel. Connect to this one.
     case tailnet(String)
+    /// The address of a peer of DuoRemote's own Tailscale node (built-in Tailscale). Connect to this one,
+    /// through that node.
+    case embedded(String)
     /// Reached some other way (the first such address).
     case outside(String)
     /// The name didn't resolve.
@@ -13,7 +16,7 @@ nonisolated enum TailnetRoute: Equatable, Sendable {
 
     var address: String? {
         switch self {
-        case .tailnet(let a), .outside(let a): a
+        case .tailnet(let a), .embedded(let a), .outside(let a): a
         case .unresolved: nil
         }
     }
@@ -21,11 +24,11 @@ nonisolated enum TailnetRoute: Equatable, Sendable {
 
 /// When the app may send a password. Pure, so it can be tested.
 nonisolated enum CredentialPolicy {
-    /// A password goes out only over Tailscale, unless the host allows otherwise or the user
+    /// A password goes out only over Tailscale (the app's or the built-in one), unless the host allows otherwise or the user
     /// approved this exact address.
     static func maySend(over route: TailnetRoute, allowOutsideTailscale: Bool, approvedAddress: String?) -> Bool {
         switch route {
-        case .tailnet: true
+        case .tailnet, .embedded: true
         case .outside(let address): allowOutsideTailscale || address == approvedAddress
         case .unresolved: allowOutsideTailscale
         }

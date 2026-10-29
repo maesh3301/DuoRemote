@@ -23,3 +23,8 @@ Only `Sources/{RoyalVNCKit,RoyalVNCKitC,Z,d3des}` and `LICENSE` were copied. Eve
    first even when ARD was offered, so a server could skip sign-in. ARD is now preferred, "None" is used only when
    the app allows it (off by default), and Tight (not implemented, so also no sign-in) is never chosen.
 
+8. Socket provider (`SDK/Connection/VNCConnection.swift`, new `Network/FileDescriptorNetworkConnection.swift`):
+   `VNCConnection.socketProvider`, when set, makes the connection run over a socket the app opens itself (the in-app
+   Tailscale tunnel returns a connected descriptor) instead of NWConnection dialling the hostname. `connection` is now
+   `any NetworkConnection` so it can be either. The descriptor connection honours the 15-second connect timeout, sets
+   `SO_NOSIGPIPE`, and `cancel()` shuts the socket down to wake blocked reads.

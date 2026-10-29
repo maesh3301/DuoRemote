@@ -538,6 +538,7 @@ struct HostEditor: View {
     @State private var password = ""
     @State private var passwordLoaded: Bool
     @State private var allowOutside: Bool
+    @State private var route: HostRoute
     @State private var showErrors = false
 
     init(host: Host?, store: HostStore) {
@@ -552,6 +553,7 @@ struct HostEditor: View {
         _symbol = State(initialValue: host?.symbolName ?? HostSymbol.defaultName)
         _passwordLoaded = State(initialValue: host == nil)
         _allowOutside = State(initialValue: host?.allowOutsideTailscale ?? false)
+        _route = State(initialValue: host?.route ?? .system)
     }
 
     private var port: UInt16? {
@@ -583,7 +585,7 @@ struct HostEditor: View {
                     if showErrors, let nameError { ErrorText(nameError) }
                     SymbolPicker(selection: $symbol)
                 }
-                Section("Connection") {
+                Section {
                     TextField("Hostname", text: $hostname, prompt: Text("my-mac or 100.x.x.x"))
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
@@ -595,6 +597,18 @@ struct HostEditor: View {
                             .multilineTextAlignment(.trailing)
                     }
                     if showErrors, let portError { ErrorText(portError) }
+                    Picker("Connect through", selection: $route) {
+                        Text("Tailscale app or network").tag(HostRoute.system)
+                        Text("Built-in Tailscale").tag(HostRoute.embeddedTailscale)
+                    }
+                } header: {
+                    Text("Connection")
+                } footer: {
+                    if route == .embeddedTailscale {
+                        Text(EmbeddedTailscale.shared.isEnabled
+                             ? "DuoRemote connects through its own Tailscale connection, so the Tailscale app's VPN can stay off. Use the Mac's Tailscale name."
+                             : "Turn on Built-in Tailscale in Settings first. DuoRemote then connects through its own Tailscale connection, so the Tailscale app's VPN can stay off.")
+                    }
                 }
                 Section {
                     TextField("Username", text: $username)
@@ -649,6 +663,7 @@ struct HostEditor: View {
         result.username = username.trimmingCharacters(in: .whitespaces)
         result.symbol = symbol
         result.allowOutsideTailscale = allowOutside
+        result.route = route
 
         if host == nil { store.add(result) } else { store.update(result) }
 

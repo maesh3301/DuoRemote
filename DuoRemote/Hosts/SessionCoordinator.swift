@@ -1,3 +1,4 @@
+@preconcurrency import RoyalVNCKit
 import SwiftUI
 import UIKit
 import Observation
@@ -110,7 +111,16 @@ final class SessionCoordinator {
         lookingUpHostID = host.id
         connectTask = Task {
             defer { if !Task.isCancelled { lookingUpHostID = nil } }
-            let route = await Tailnet.route(to: host.hostname, port: host.port)
+            let route: TailnetRoute
+            var embeddedProblem: EmbeddedTailscale.Problem?
+            if host.route == .embeddedTailscale {
+                switch await EmbeddedTailscale.shared.route(to: host.hostname) {
+                case .success(let address): route = .embedded(address)
+                case .failure(let problem): route = .unresolved; embeddedProblem = problem
+                }
+            } else {
+                route = await Tailnet.route(to: host.hostname, port: host.port)
+            }
             guard !Task.isCancelled else { return }
             var resolved = given
             if resolved == nil, !host.username.isEmpty {
@@ -125,9 +135,21 @@ final class SessionCoordinator {
                 prompt(host, outsideAddress: outside)
                 return
             }
-            if CredentialPolicy.maySend(over: route, allowOutsideTailscale: host.allowOutsideTailscale,
-                                        approvedAddress: resolved.approvedAddress) {
-                begin(host, credentials: resolved, address: route.address)
+            // Built-in Tailscale never falls back to the system's network.
+            if let embeddedProblem {
+                begin(host, credentials: resolved, address: nil, blocked: .network(embeddedProblem.message))
+            } else if CredentialPolicy.maySend(over: route, allowOutsideTailscale: host.allowOutsideTailscale,
+                                               approvedAddress: resolved.approvedAddress) {
+                var socket: VNCSocketProvider?
+                if case .embedded(let address) = route {
+                    socket = EmbeddedTailscale.shared.socketProvider(address: address, port: host.port, name: host.hostname)
+                    guard socket != nil else {
+                        begin(host, credentials: resolved, address: nil,
+                              blocked: .network(EmbeddedTailscale.Problem.notSignedIn.message))
+                        return
+                    }
+                }
+                begin(host, credentials: resolved, address: route.address, socket: socket)
             } else if route == .unresolved {
                 begin(host, credentials: resolved, address: nil,
                       blocked: .network("Can't find \(host.hostname). Is Tailscale connected?"))
@@ -146,8 +168,10 @@ final class SessionCoordinator {
 
     /// - Parameters:
     ///   - address: the checked address to connect to (nil = let the library resolve the name).
+    ///   - socket: opens the connection through built-in Tailscale.
     ///   - blocked: show this failure instead of connecting.
-    private func begin(_ host: Host, credentials: Credentials, address: String?, blocked: VNCSession.Failure? = nil) {
+    private func begin(_ host: Host, credentials: Credentials, address: String?, socket: VNCSocketProvider? = nil,
+                       blocked: VNCSession.Failure? = nil) {
         if let current = active, activeHost?.id != host.id { current.disconnect() }
 
         let session: VNCSession
@@ -172,7 +196,7 @@ final class SessionCoordinator {
             case .connecting, .connected: break
             default:
                 session.connect(username: credentials.username, password: credentials.password,
-                                address: address, allowOtherAuth: host.allowOutsideTailscale)
+                                address: address, allowOtherAuth: host.allowOutsideTailscale, socket: socket)
             }
         }
         updateIdleTimer()

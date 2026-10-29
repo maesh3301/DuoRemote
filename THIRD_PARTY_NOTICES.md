@@ -56,3 +56,37 @@ Written by Richard Outerbridge. Copyright (c) 1988,1989,1990,1991,1992 by Richar
 This is D3DES (V5.09) by Richard Outerbridge with the double and triple-length support removed for use in VNC. Also the bytebit[] array has been reversed so that the most significant bit in each byte of the key is ignored, not the least significant. These changes are Copyright (C) 1998 Olivetti & Oracle Research Laboratory.
 
 This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+TailscaleKit (libtailscale)
+https://github.com/tailscale/libtailscale
+Used for built-in Tailscale, built from source with one addition (scripts/libtailscale/duoremote_nologs.go). It includes Tailscale (https://github.com/tailscale/tailscale, BSD 3-Clause) and the Go libraries Tailscale depends on, each under its own licence; see https://github.com/tailscale/tailscale/blob/main/licenses/apple.md.
+
+BSD 3-Clause License
+
+Copyright (c) 2023 Tailscale & AUTHORS.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.

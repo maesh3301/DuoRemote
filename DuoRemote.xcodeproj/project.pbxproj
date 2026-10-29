@@ -43,9 +43,11 @@
 		86E4FCE2C84025B0D42C9185 /* TouchInterpreterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6771D12F0EE93B110D915CB /* TouchInterpreterTests.swift */; };
 		8F3837FB21DE792CEF0614C4 /* LaptopDeck.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A37B830AAF73AE5BED2FFF5 /* LaptopDeck.swift */; };
 		943F2130CE2519EE33BF2FC1 /* CredentialPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48CCB6E3896D50119720786E /* CredentialPolicy.swift */; };
+		83C7C1B46169621C76896B41 /* EmbeddedTailscale.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A7A2A63581762C883A2B7B /* EmbeddedTailscale.swift */; };
 		959802152698F6CE771B24FE /* Viewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = E74BAC53DF4F213A1D1F3ABA /* Viewport.swift */; };
 		9AAC8D57A4A5572FB8936A5F /* SkyPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7DA6121FA5384F4B340D1C /* SkyPalette.swift */; };
 		9EF5ADC8A75F36385BEEBF08 /* RoyalVNCKit in Frameworks */ = {isa = PBXBuildFile; productRef = 2E25BBE9008B47ABCCAD86A6 /* RoyalVNCKit */; };
+		A1B2C3D4E5F6A7B8C9D0E1F2 /* TailscaleKit in Frameworks */ = {isa = PBXBuildFile; productRef = A1B2C3D4E5F6A7B8C9D0E1F5 /* TailscaleKit */; };
 		9FE3EA269979A1AD9AD82ABA /* KeyMappingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D2EA4E29D5E43764EC7E5BC /* KeyMappingTests.swift */; };
 		A01A17E9F8CCA83265DE7B68 /* RemoteCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F06BD19FF919185AADDA801 /* RemoteCanvas.swift */; };
 		AA5B37ECD4D0497B1DB5BC75 /* ShellTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6196905F3C29CFA0C083CB8 /* ShellTests.swift */; };
@@ -61,6 +63,7 @@
 		D5212FB83ED304D6C535E9D2 /* AppInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40126972F4BF3D452A0250DF /* AppInfo.swift */; };
 		D5D89729D6C361467D74FDBC /* SessionScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = E20A1728FBA230FCE4C67774 /* SessionScreen.swift */; };
 		D8DE93A901866C3107050962 /* CredentialPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30BBA3F7773DA5C895AD6212 /* CredentialPolicyTests.swift */; };
+		C5C7BF10115A13C0624DE2A4 /* EmbeddedTailscaleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74236A9DA06A89D32F877BAE /* EmbeddedTailscaleTests.swift */; };
 		DF27857CF9921F4BB5BC5C60 /* FramebufferRenderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0BD64EA3A457B940C1F62B7 /* FramebufferRenderer.swift */; };
 		E9D70D4BCAC589073CCD4451 /* Host.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22880156ABF985A8B17CA4B4 /* Host.swift */; };
 		F925DBD495C965193731574C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = D8575713052C4683C750BF12 /* Assets.xcassets */; };
@@ -93,6 +96,7 @@
 		22880156ABF985A8B17CA4B4 /* Host.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Host.swift; sourceTree = "<group>"; };
 		2979FDB967D2D0EA117F7C5F /* DeckEffects.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeckEffects.swift; sourceTree = "<group>"; };
 		30BBA3F7773DA5C895AD6212 /* CredentialPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialPolicyTests.swift; sourceTree = "<group>"; };
+		74236A9DA06A89D32F877BAE /* EmbeddedTailscaleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddedTailscaleTests.swift; sourceTree = "<group>"; };
 		3423B7A4417C8F9ACBAE4A89 /* SkyLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyLocation.swift; sourceTree = "<group>"; };
 		3569F81F05DC95729E0271A4 /* DemoFramebuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoFramebuffer.swift; sourceTree = "<group>"; };
 		36970C49F0D634B81E2781E6 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -102,6 +106,7 @@
 		40126972F4BF3D452A0250DF /* AppInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInfo.swift; sourceTree = "<group>"; };
 		4214D489F2CBE530A9C848CC /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		48CCB6E3896D50119720786E /* CredentialPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CredentialPolicy.swift; sourceTree = "<group>"; };
+		D4A7A2A63581762C883A2B7B /* EmbeddedTailscale.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmbeddedTailscale.swift; sourceTree = "<group>"; };
 		57EBD5898F0BCB0CD734C8D5 /* TrackpadSurface.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackpadSurface.swift; sourceTree = "<group>"; };
 		5C64746043C8CE73C9BEA7C9 /* SkyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SkyTests.swift; sourceTree = "<group>"; };
 		65087A897538DB829F566D0C /* Acknowledgements.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = Acknowledgements.txt; sourceTree = "<group>"; };
@@ -134,6 +139,7 @@
 		E31FBDC230056FD04FB2960F /* WelcomeSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeSheet.swift; sourceTree = "<group>"; };
 		E74BAC53DF4F213A1D1F3ABA /* Viewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Viewport.swift; sourceTree = "<group>"; };
 		EAF17A66F0EAC883506B428A /* RoyalVNCKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = RoyalVNCKit; path = Vendor/RoyalVNCKit; sourceTree = SOURCE_ROOT; };
+		A1B2C3D4E5F6A7B8C9D0E1F3 /* TailscaleKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = TailscaleKit; path = Vendor/TailscaleKit; sourceTree = SOURCE_ROOT; };
 		F0CF8FDA5EC6BBC71EE542C6 /* KeyboardInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardInput.swift; sourceTree = "<group>"; };
 		F19857C70B646EF3B3EC929B /* KeysTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeysTests.swift; sourceTree = "<group>"; };
 		F5127413C88AC1A5BA99688C /* ComposeBox.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeBox.swift; sourceTree = "<group>"; };
@@ -148,6 +154,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				9EF5ADC8A75F36385BEEBF08 /* RoyalVNCKit in Frameworks */,
+				A1B2C3D4E5F6A7B8C9D0E1F2 /* TailscaleKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -209,6 +216,7 @@
 			isa = PBXGroup;
 			children = (
 				30BBA3F7773DA5C895AD6212 /* CredentialPolicyTests.swift */,
+				74236A9DA06A89D32F877BAE /* EmbeddedTailscaleTests.swift */,
 				AE37215644E3B13797341A1A /* HostsTests.swift */,
 				0D2EA4E29D5E43764EC7E5BC /* KeyMappingTests.swift */,
 				F19857C70B646EF3B3EC929B /* KeysTests.swift */,
@@ -241,6 +249,7 @@
 			isa = PBXGroup;
 			children = (
 				EAF17A66F0EAC883506B428A /* RoyalVNCKit */,
+				A1B2C3D4E5F6A7B8C9D0E1F3 /* TailscaleKit */,
 			);
 			name = Packages;
 			sourceTree = "<group>";
@@ -261,6 +270,7 @@
 			children = (
 				18655A2EA534C0ED347AB130 /* ConnectionBridge.swift */,
 				48CCB6E3896D50119720786E /* CredentialPolicy.swift */,
+				D4A7A2A63581762C883A2B7B /* EmbeddedTailscale.swift */,
 				BFFF502B3CD6E4783786B563 /* Diagnostics.swift */,
 				0605BB70B86B445EAB32428C /* KeyMapping.swift */,
 				A774A89AB9A7A7F5B9631D73 /* ModifierState.swift */,
@@ -354,6 +364,7 @@
 			name = DuoRemote;
 			packageProductDependencies = (
 				2E25BBE9008B47ABCCAD86A6 /* RoyalVNCKit */,
+				A1B2C3D4E5F6A7B8C9D0E1F5 /* TailscaleKit */,
 			);
 			productName = DuoRemote;
 			productReference = 038018FA66DF47ABF16F65D6 /* DuoRemote.app */;
@@ -389,6 +400,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				AC69FB52C4F3B1492945F2D9 /* XCLocalSwiftPackageReference "Vendor/RoyalVNCKit" */,
+				A1B2C3D4E5F6A7B8C9D0E1F4 /* XCLocalSwiftPackageReference "Vendor/TailscaleKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 62D928B6D240DF2D57D63497 /* Products */;
@@ -419,6 +431,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D8DE93A901866C3107050962 /* CredentialPolicyTests.swift in Sources */,
+				C5C7BF10115A13C0624DE2A4 /* EmbeddedTailscaleTests.swift in Sources */,
 				F9C7BEC42B78D09CB7881AFC /* HostsTests.swift in Sources */,
 				9FE3EA269979A1AD9AD82ABA /* KeyMappingTests.swift in Sources */,
 				14978CE6211153B7EF6FCA5A /* KeysTests.swift in Sources */,
@@ -439,6 +452,7 @@
 				864CA9A69362985126D8F856 /* ComposeBox.swift in Sources */,
 				48036388522C75EE9840E66E /* ConnectionBridge.swift in Sources */,
 				943F2130CE2519EE33BF2FC1 /* CredentialPolicy.swift in Sources */,
+				83C7C1B46169621C76896B41 /* EmbeddedTailscale.swift in Sources */,
 				B1B95AE30D9DDBFF6E156E4A /* CredentialSheet.swift in Sources */,
 				1113A1B739C44C17220F005A /* DeckEffects.swift in Sources */,
 				7A64C7B5901BEA829559C714 /* DemoFramebuffer.swift in Sources */,
@@ -732,12 +746,20 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = Vendor/RoyalVNCKit;
 		};
+		A1B2C3D4E5F6A7B8C9D0E1F4 /* XCLocalSwiftPackageReference "Vendor/TailscaleKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Vendor/TailscaleKit;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
 		2E25BBE9008B47ABCCAD86A6 /* RoyalVNCKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = RoyalVNCKit;
+		};
+		A1B2C3D4E5F6A7B8C9D0E1F5 /* TailscaleKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = TailscaleKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

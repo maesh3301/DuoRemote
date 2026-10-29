@@ -30,6 +30,7 @@ the simulator. Never commit a team ID, a bundle ID or `Config/Local.xcconfig`.
 | `DuoRemote/Theme/` | The sky palette and deck effects |
 | `DuoRemoteTests/` | Swift Testing tests for the pure logic |
 | `Vendor/RoyalVNCKit/` | Vendored, patched RoyalVNCKit 1.1.0 |
+| `Vendor/TailscaleKit/` | Local package for TailscaleKit (built by `scripts/build-tailscalekit.sh`, not committed) |
 
 ## Rules
 
@@ -51,7 +52,10 @@ the simulator. Never commit a team ID, a bundle ID or `Config/Local.xcconfig`.
   contents or screen contents; log counts at most.
 - Clipboard writes are local-only and expire. Paste to Mac never presses Return and confirms long or multi-line text.
 - The privacy cover hides the app in the app switcher. Debug-only code stays behind `#if DEBUG`.
-- No analytics, accounts, servers or third-party SDKs.
+- No analytics, accounts, servers or third-party SDKs. The one exception is TailscaleKit for built-in Tailscale
+  (`EmbeddedTailscale`): its log upload stays off (`scripts/libtailscale/duoremote_nologs.go`), a Mac set to built-in
+  Tailscale is looked up only among the node's peers and never falls back to the system's network, and the node's
+  own log lines are dropped.
 
 If a change touches any of these, say so plainly in the pull request.
 

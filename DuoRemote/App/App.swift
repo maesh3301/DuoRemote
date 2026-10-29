@@ -9,6 +9,7 @@ struct DuoRemoteApp: App {
     init() {
         Diagnostics.shared.start()
         PrivacyShield.shared.start()
+        EmbeddedTailscale.shared.startIfEnabled()
     }
 
     var body: some Scene {
@@ -37,6 +38,9 @@ struct DuoRemoteApp: App {
         if args.contains("-demoSession") { coordinator.openDemo() }
         if let i = args.firstIndex(of: "-vncSmoke"), i + 1 < args.count {
             VNCSmokeTest.run(host: args[i + 1])
+        }
+        if let i = args.firstIndex(of: "-tailscaleSmoke"), i + 1 < args.count {
+            VNCSmokeTest.runEmbedded(host: args[i + 1])
         }
         #endif
     }

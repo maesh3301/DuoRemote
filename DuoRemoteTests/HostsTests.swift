@@ -64,6 +64,17 @@ struct HostsTests {
         #expect(host.symbol == nil && host.lastConnected == nil)
         #expect(host.symbolName == "desktopcomputer")
         #expect(host.allowOutsideTailscale == false)
+        #expect(host.route == .system)
+    }
+
+    @Test func routeRoundTripsAndUnknownFallsBack() throws {
+        var host = Host(name: "A", hostname: "a", username: "u")
+        host.route = .embeddedTailscale
+        let back = try JSONDecoder().decode(Host.self, from: JSONEncoder().encode(host))
+        #expect(back.route == .embeddedTailscale)
+
+        let json = #"{"name":"Mini","hostname":"mini","route":"carrierPigeon"}"#
+        #expect(try JSONDecoder().decode(Host.self, from: Data(json.utf8)).route == .system)
     }
 
     @Test func allowOutsideTailscaleRoundTrips() throws {

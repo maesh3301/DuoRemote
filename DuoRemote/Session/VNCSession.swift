@@ -113,9 +113,11 @@ final class VNCSession {
     /// - Parameters:
     ///   - address: the already-checked address to connect to, instead of resolving `hostname` again.
     ///   - allowOtherAuth: answer sign-in requests other than a macOS one.
-    func connect(username: String, password: String, address: String? = nil, allowOtherAuth: Bool = false) {
+    ///   - socket: opens the connection itself (built-in Tailscale) instead of dialling `address`.
+    func connect(username: String, password: String, address: String? = nil, allowOtherAuth: Bool = false,
+                 socket: VNCSocketProvider? = nil) {
         connect(credentials: .init(username: username, password: password), address: address,
-                allowOtherAuth: allowOtherAuth, log: { [weak self] line in
+                allowOtherAuth: allowOtherAuth, socket: socket, log: { [weak self] line in
             DispatchQueue.main.async { MainActor.assumeIsolated { self?.note(line) } }
         })
     }
@@ -128,7 +130,7 @@ final class VNCSession {
 
     /// `credentials == nil` → the auth request is answered with nothing (smoke test).
     func connect(credentials: ConnectionBridge.Credentials?, address: String? = nil, allowOtherAuth: Bool = false,
-                 log: (@Sendable (String) -> Void)? = nil) {
+                 socket: VNCSocketProvider? = nil, log: (@Sendable (String) -> Void)? = nil) {
         guard !isDemo else { return }
         tearDown()
         self.log = log
@@ -144,6 +146,8 @@ final class VNCSession {
                                               frameEncodings: .default)
         let connection = VNCConnection(settings: settings)
         connection.isUnauthenticatedAccessAllowed = allowOtherAuth   // a Mac with no sign-in at all
+        connection.socketProvider = socket
+        if socket != nil { log?("via built-in Tailscale") }
         let bridge = ConnectionBridge(session: self, credentials: credentials, allowOtherAuth: allowOtherAuth,
                                       dirty: frameDirty, log: log)
         connection.delegate = bridge

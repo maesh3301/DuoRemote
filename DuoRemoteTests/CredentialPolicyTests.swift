@@ -67,6 +67,12 @@ struct CredentialPolicyTests {
         #expect(CredentialPolicy.maySend(over: .unresolved, allowOutsideTailscale: true, approvedAddress: nil))
     }
 
+    @Test func builtInTailscaleCountsAsTailscale() {
+        let route = TailnetRoute.embedded("100.80.0.1")
+        #expect(route.address == "100.80.0.1")
+        #expect(CredentialPolicy.maySend(over: route, allowOutsideTailscale: false, approvedAddress: nil))
+    }
+
     @Test func onlyMacOSSignInIsAnsweredByDefault() {
         #expect(CredentialPolicy.mayAnswer(.appleRemoteDesktop, allowOutsideTailscale: false))
         #expect(!CredentialPolicy.mayAnswer(.vnc, allowOutsideTailscale: false))
