@@ -17,7 +17,7 @@ nonisolated enum KeychainStoreError: Error, Equatable, Sendable {
 actor KeychainStore {
     private let service: String
 
-    init(service: String = AppInfo.bundleID) {
+    init(service: String = RemoteConfiguration.current.keychainService) {
         self.service = service
     }
 
@@ -70,12 +70,9 @@ actor KeychainStore {
 
     /// Every account (key) stored under this service.
     func allKeys() throws -> [String] {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecReturnAttributes as String: true,
-            kSecMatchLimit as String: kSecMatchLimitAll,
-        ]
+        var query = serviceQuery
+        query[kSecReturnAttributes as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitAll
         var items: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &items)
         switch status {
@@ -91,19 +88,24 @@ actor KeychainStore {
 
     /// Deletes every item under this service.
     func deleteAll() throws {
-        let query: [String: Any] = [kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service]
-        let status = SecItemDelete(query as CFDictionary)
+        let status = SecItemDelete(serviceQuery as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw KeychainStoreError.unhandledError(status: status)
         }
     }
 
-    private func baseQuery(account: String) -> [String: Any] {
+    /// What every query starts from, so nothing here can reach another service's items.
+    nonisolated var serviceQuery: [String: Any] {
         [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
         ]
+    }
+
+    private func baseQuery(account: String) -> [String: Any] {
+        var query = serviceQuery
+        query[kSecAttrAccount as String] = account
+        return query
     }
 }
 

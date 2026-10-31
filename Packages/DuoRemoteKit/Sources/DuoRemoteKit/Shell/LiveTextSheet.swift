@@ -11,7 +11,7 @@ struct LiveTextSheet: View {
     @State private var found: Bool?
     @State private var copied = false
     @State private var showIntro = false
-    @AppStorage("copyTextTipsHidden") private var tipsHidden = false
+    @AppStorage("copyTextTipsHidden", store: .remote) private var tipsHidden = false
 
     var body: some View {
         NavigationStack {

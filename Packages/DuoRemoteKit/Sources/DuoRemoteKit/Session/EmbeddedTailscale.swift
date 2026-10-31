@@ -60,7 +60,7 @@ nonisolated enum EmbeddedTailnet {
 }
 
 /// DuoRemote's own Tailscale node, so a Mac can be reached without the Tailscale app's VPN.
-/// The node runs in the app (userspace, no VPN profile) and shows up in the tailnet as "duoremote".
+/// The node runs in the app (userspace, no VPN profile) and shows up in the tailnet under the configuration's node name.
 @Observable
 final class EmbeddedTailscale {
     static let shared = EmbeddedTailscale()
@@ -93,7 +93,7 @@ final class EmbeddedTailscale {
     var hasPeerList: Bool { state == .running && !peers.isEmpty }
 
     /// Remembered so the node starts with the app once the user has turned it on.
-    var isEnabled: Bool { UserDefaults.standard.bool(forKey: Self.enabledKey) }
+    var isEnabled: Bool { UserDefaults.remote.bool(forKey: Self.enabledKey) }
 
     @ObservationIgnored private var node: TailscaleNode?
     @ObservationIgnored private var handle: TailscaleHandle?
@@ -115,7 +115,7 @@ final class EmbeddedTailscale {
         if openLogin { openLoginWhenReady = true }
         if state == .needsLogin, openLogin, let loginURL { open(loginURL) }
         guard node == nil, state != .starting else { return }
-        UserDefaults.standard.set(true, forKey: Self.enabledKey)
+        UserDefaults.remote.set(true, forKey: Self.enabledKey)
         state = .starting
         Task {
             do {
@@ -135,7 +135,7 @@ final class EmbeddedTailscale {
     /// Signs out by discarding this node's keys. Its entry stays in the Tailscale admin console
     /// until it's removed there or expires.
     func signOut() async {
-        UserDefaults.standard.set(false, forKey: Self.enabledKey)
+        UserDefaults.remote.set(false, forKey: Self.enabledKey)
         pollTask?.cancel()
         pollTask = nil
         if let node { try? await node.close() }
@@ -150,16 +150,14 @@ final class EmbeddedTailscale {
     }
 
     nonisolated private static func makeNode() throws -> TailscaleNode {
-        let config = Configuration(hostName: "duoremote", path: try stateDirectory(create: true).path(percentEncoded: false),
+        let config = Configuration(hostName: RemoteConfiguration.current.tailscaleNodeName, path: try stateDirectory(create: true).path(percentEncoded: false),
                                    authKey: nil, controlURL: kDefaultControlURL, ephemeral: false)
         return try TailscaleNode(config: config, logger: QuietSink())
     }
 
     /// The node's keys and state: kept out of backups, readable only after the first unlock.
     nonisolated private static func stateDirectory(create: Bool) throws -> URL {
-        var dir = try FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
-                                              appropriateFor: nil, create: create)
-            .appending(path: "Tailscale", directoryHint: .isDirectory)
+        var dir = RemoteConfiguration.current.tailscaleDirectory
         if create {
             try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true,
                                                     attributes: [.protectionKey: FileProtectionType.completeUntilFirstUserAuthentication])

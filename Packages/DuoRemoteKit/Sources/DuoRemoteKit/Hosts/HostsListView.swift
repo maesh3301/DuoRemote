@@ -19,12 +19,13 @@ struct HostsListView: View {
         }
     }
 
+    @Environment(\.remoteExit) private var exit
     @State private var editor: EditorTarget?
     @State private var showSettings = false
     @State private var pendingDelete: Host?
     @State private var reachability = ReachabilityModel()
     @State private var showWelcome = false
-    @AppStorage("hasSeenWelcome") private var hasSeenWelcome = false
+    @AppStorage("hasSeenWelcome", store: .remote) private var hasSeenWelcome = false
 
     init(coordinator: SessionCoordinator) {
         self.coordinator = coordinator
@@ -36,68 +37,76 @@ struct HostsListView: View {
     private var probeKey: [String] { store.hosts.map { "\($0.id)\($0.hostname):\($0.port)/\($0.route.rawValue)" } }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    HeroHeader(
-                        reports: Diagnostics.reports(),
-                        onSettings: { showSettings = true },
-                        onHelp: { showWelcome = true },
-                        onAdd: { editor = .new }
-                    )
+        // Inside a host app, its navigation is the only stack.
+        if exit == nil {
+            NavigationStack {
+                list.toolbarVisibility(.hidden, for: .navigationBar)
+            }
+        } else {
+            list
+        }
+    }
 
-                    if store.hosts.isEmpty {
-                        OnboardingCard(onAdd: { editor = .new }, onDemo: coordinator.openDemo, onHelp: { showWelcome = true })
-                    } else {
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 320), spacing: 16)], spacing: 16) {
-                            ForEach(store.hosts) { host in
-                                HostCard(
-                                    host: host,
-                                    state: reachability.state(for: host),
-                                    connecting: coordinator.lookingUpHostID == host.id,
-                                    onConnect: { coordinator.connect(host) },
-                                    onEdit: { editor = .edit(host) },
-                                    onDelete: { pendingDelete = host }
-                                )
-                            }
-                            AddMacCard { editor = .new }
+    private var list: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                HeroHeader(
+                    reports: Diagnostics.reports(),
+                    onSettings: { showSettings = true },
+                    onHelp: { showWelcome = true },
+                    onAdd: { editor = .new }
+                )
+
+                if store.hosts.isEmpty {
+                    OnboardingCard(onAdd: { editor = .new }, onDemo: coordinator.openDemo, onHelp: { showWelcome = true })
+                } else {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 320), spacing: 16)], spacing: 16) {
+                        ForEach(store.hosts) { host in
+                            HostCard(
+                                host: host,
+                                state: reachability.state(for: host),
+                                connecting: coordinator.lookingUpHostID == host.id,
+                                onConnect: { coordinator.connect(host) },
+                                onEdit: { editor = .edit(host) },
+                                onDelete: { pendingDelete = host }
+                            )
                         }
-
-                        ListRowButton(title: "Try the demo", systemImage: "play.rectangle", action: coordinator.openDemo)
-                        ListRowButton(title: "Help", systemImage: "questionmark.circle") { showWelcome = true }
+                        AddMacCard { editor = .new }
                     }
-                }
-                .frame(maxWidth: 900)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 32)
-                .frame(maxWidth: .infinity)
-            }
-            .background { HomeBackground() }
-            .refreshable { await runProbe() }
-            .task(id: probeKey) { await runProbe() }
-            .onDisappear { reachability.cancel() }
-            .toolbarVisibility(.hidden, for: .navigationBar)
-            .sheet(item: $editor) { target in
-                switch target {
-                case .new: HostEditor(host: nil, store: store)
-                case .edit(let host): HostEditor(host: host, store: store)
+
+                    ListRowButton(title: "Try the demo", systemImage: "play.rectangle", action: coordinator.openDemo)
+                    ListRowButton(title: "Help", systemImage: "questionmark.circle") { showWelcome = true }
                 }
             }
-            .sheet(isPresented: $showSettings) { SettingsView() }
-            .sheet(isPresented: $showWelcome, onDismiss: { hasSeenWelcome = true }) {
-                WelcomeSheet { showWelcome = false }
+            .frame(maxWidth: 900)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 32)
+            .frame(maxWidth: .infinity)
+        }
+        .background { HomeBackground() }
+        .refreshable { await runProbe() }
+        .task(id: probeKey) { await runProbe() }
+        .onDisappear { reachability.cancel() }
+        .sheet(item: $editor) { target in
+            switch target {
+            case .new: HostEditor(host: nil, store: store)
+            case .edit(let host): HostEditor(host: host, store: store)
             }
-            .onAppear { if !hasSeenWelcome { showWelcome = true } }
-            .confirmationDialog(
-                "Delete this Mac?",
-                isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
-                titleVisibility: .visible,
-                presenting: pendingDelete
-            ) { host in
-                Button("Delete \(host.name)", role: .destructive) { store.delete(host) }
-            } message: { host in
-                Text("\(host.name) and its saved password will be removed from this \(AppInfo.device).")
-            }
+        }
+        .sheet(isPresented: $showSettings) { SettingsView() }
+        .sheet(isPresented: $showWelcome, onDismiss: { hasSeenWelcome = true }) {
+            WelcomeSheet { showWelcome = false }
+        }
+        .onAppear { if !hasSeenWelcome { showWelcome = true } }
+        .confirmationDialog(
+            "Delete this Mac?",
+            isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }),
+            titleVisibility: .visible,
+            presenting: pendingDelete
+        ) { host in
+            Button("Delete \(host.name)", role: .destructive) { store.delete(host) }
+        } message: { host in
+            Text("\(host.name) and its saved password will be removed from this \(AppInfo.device).")
         }
     }
 
@@ -606,8 +615,8 @@ struct HostEditor: View {
                 } footer: {
                     if route == .embeddedTailscale {
                         Text(EmbeddedTailscale.shared.isEnabled
-                             ? "DuoRemote connects through its own Tailscale connection, so the Tailscale app's VPN can stay off. Use the Mac's Tailscale name."
-                             : "Turn on Built-in Tailscale in Settings first. DuoRemote then connects through its own Tailscale connection, so the Tailscale app's VPN can stay off.")
+                             ? "\(AppInfo.name) connects through its own Tailscale connection, so the Tailscale app's VPN can stay off. Use the Mac's Tailscale name."
+                             : "Turn on Built-in Tailscale in Settings first. \(AppInfo.name) then connects through its own Tailscale connection, so the Tailscale app's VPN can stay off.")
                     }
                 }
                 Section {

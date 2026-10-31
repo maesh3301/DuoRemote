@@ -7,9 +7,7 @@ public nonisolated final class Diagnostics: NSObject, MXMetricManagerSubscriber,
     public static let shared = Diagnostics()
 
     static var folder: URL {
-        let url = URL.documentsDirectory.appending(path: "Diagnostics", directoryHint: .isDirectory)
-        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-        return url
+        URL.documentsDirectory.appending(path: "Diagnostics", directoryHint: .isDirectory)
     }
 
     public func start() {
@@ -23,6 +21,7 @@ public nonisolated final class Diagnostics: NSObject, MXMetricManagerSubscriber,
     }
 
     private func save(_ payloads: [MXDiagnosticPayload]) {
+        try? FileManager.default.createDirectory(at: Self.folder, withIntermediateDirectories: true)
         for p in payloads {
             var kinds: [String] = []
             if !(p.crashDiagnostics ?? []).isEmpty { kinds.append("crash") }

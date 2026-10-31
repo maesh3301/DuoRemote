@@ -52,6 +52,7 @@ public final class SessionCoordinator {
     @ObservationIgnored private var phase: ScenePhase = .active
     @ObservationIgnored private var resumeHost: Host?
     @ObservationIgnored private var observationGeneration = 0
+    @ObservationIgnored private var isPrepared = false
 
     #if DEBUG
     /// `-vncTraceRoute`: connect this way regardless of the saved setting (not saved).
@@ -62,13 +63,18 @@ public final class SessionCoordinator {
         self.store = store
     }
 
-    public convenience init() {
+    /// There's only one of these in an app, and it's made before anything else in the kit.
+    public convenience init(configuration: RemoteConfiguration = .standalone) {
+        RemoteConfiguration.current = configuration
         self.init(store: HostStore())
     }
 
     /// What needs doing once before the first connect: starts built-in Tailscale if it's turned on
-    /// and tidies the Keychain. An app calls this at launch.
+    /// and tidies the Keychain. An app that is only DuoRemote calls this at launch; a host app when
+    /// Remote first opens, so nobody who never opens it pays for a Tailscale node.
     public func prepare() async {
+        guard !isPrepared else { return }
+        isPrepared = true
         EmbeddedTailscale.shared.startIfEnabled()
         await store.tidyKeychain()
         #if DEBUG
@@ -108,6 +114,20 @@ public final class SessionCoordinator {
         store.update(host)
         activeHost = host
     }
+
+    // MARK: In a host app
+
+    /// Whether Remote is on screen. A host app keeps this current; the screen only stays awake for
+    /// a session the person can see.
+    public var isOnScreen = true {
+        didSet { updateIdleTimer() }
+    }
+
+    /// Whether there's a Mac's screen or saved Macs to keep out of the app switcher.
+    public var isInUse: Bool { isOnScreen || active != nil }
+
+    /// The Mac a session is open with.
+    public var activeMacName: String? { activeHost?.name }
 
     /// User-initiated disconnect.
     public func disconnect() {
@@ -297,7 +317,10 @@ public final class SessionCoordinator {
 
     public func scenePhaseChanged(_ newPhase: ScenePhase) {
         phase = newPhase
-        if newPhase == .active { warmUpBuiltInTailscale() }
+        if newPhase == .active {
+            SkyTheme.shared.refresh()
+            if isPrepared { warmUpBuiltInTailscale() }
+        }
         switch newPhase {
         case .background:
             retryTask?.cancel()
@@ -336,7 +359,7 @@ public final class SessionCoordinator {
     }
 
     private func updateIdleTimer() {
-        UIApplication.shared.isIdleTimerDisabled = active?.status == .connected
+        UIApplication.shared.isIdleTimerDisabled = isOnScreen && active?.status == .connected
     }
 
     /// Opens a demo session: a built-in test pattern, no network. Lets anyone try the controls

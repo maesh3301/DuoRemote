@@ -53,13 +53,22 @@ the simulator. Never commit a team ID, a bundle ID or `Config/Local.xcconfig`.
 - Passwords live only in the Keychain (`WhenUnlockedThisDeviceOnly`). Never log passwords, typed text, clipboard
   contents or screen contents; log counts at most.
 - Clipboard writes are local-only and expire. Paste to Mac never presses Return and confirms long or multi-line text.
-- The privacy cover hides the app in the app switcher. Debug-only code stays behind `#if DEBUG`.
+- The privacy cover hides the app in the app switcher (in a host app: Remote, whenever it's on screen or a session is
+  open). Debug-only code stays behind `#if DEBUG`.
 - No analytics, accounts, servers or third-party SDKs. The one exception is TailscaleKit for built-in Tailscale
   (`EmbeddedTailscale`): its log upload stays off (`scripts/libtailscale/duoremote_nologs.go`), a Mac set to built-in
   Tailscale is looked up only among the node's peers and never falls back to the system's network, and the node's
   own log lines are dropped.
 
 If a change touches any of these, say so plainly in the pull request.
+
+## Running inside another app
+
+`SessionCoordinator(configuration:)` gives the kit its own Keychain service, folder and settings file, and
+`RemoteRootView(coordinator:exit:)` then sits in the host's navigation. The host calls `prepare()` when Remote first
+opens, reports `scenePhaseChanged`, keeps `isOnScreen` current, and decides the app-wide things: the keyboard block,
+the privacy cover (`PrivacyShield.start(whenever:)`) and crash reports. Everything the kit remembers goes through
+`RemoteConfiguration`; a test reads the sources to keep it that way.
 
 ## Pull requests
 

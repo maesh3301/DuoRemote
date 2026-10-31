@@ -22,7 +22,7 @@ struct SessionScreen: View {
     @State private var flatFold: CGRect?
     /// Full window size from a keyboard-independent view (laptop pose is pinned to this).
     @State private var fullSize: CGSize = .zero
-    @AppStorage("deckMode") private var deckMode: DeckMode = .trackpad
+    @AppStorage("deckMode", store: .remote) private var deckMode: DeckMode = .trackpad
 
     #if DEBUG
     private let forceLaptop = ProcessInfo.processInfo.arguments.contains("-laptopDemo")

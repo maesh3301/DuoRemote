@@ -4,13 +4,14 @@ import SwiftUI
 struct SessionMenu: View {
     @Bindable var session: VNCSession
     let coordinator: SessionCoordinator
+    @Environment(\.remoteExit) private var exit
     @State private var showLog = false
     @State private var showScrollSpeed = false
     @State private var liveText: LiveTextImage?
     @State private var showCopyIntro = false
     @State private var continueToCopy = false
-    @AppStorage("hasSeenCopyTextIntro") private var hasSeenCopyIntro = false
-    @AppStorage("autoCompose") private var autoCompose = true
+    @AppStorage("hasSeenCopyTextIntro", store: .remote) private var hasSeenCopyIntro = false
+    @AppStorage("autoCompose", store: .remote) private var autoCompose = true
 
     private func openCopyText() {
         if let img = session.visibleSnapshot() { liveText = LiveTextImage(image: img) }
@@ -39,6 +40,9 @@ struct SessionMenu: View {
                 Button("Connection log", systemImage: "list.bullet.rectangle") { showLog = true }
             }
             Section {
+                if let exit {
+                    Button(exit.title, systemImage: "arrow.uturn.backward", action: exit.action)
+                }
                 Button("Disconnect", systemImage: "xmark", role: .destructive) { coordinator.disconnect() }
             }
         } label: {

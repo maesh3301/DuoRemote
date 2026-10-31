@@ -10,10 +10,14 @@ public final class PrivacyShield: NSObject {
 
     private var covers: [ObjectIdentifier: UIWindow] = [:]
     private var started = false
+    private var isNeeded: () -> Bool = { true }
 
-    public func start() {
+    /// - Parameter isNeeded: asked each time the app is about to leave the screen. A host app says
+    ///   when Remote is showing; its other screens aren't this cover's to hide.
+    public func start(whenever isNeeded: @escaping () -> Bool = { true }) {
         guard !started else { return }
         started = true
+        self.isNeeded = isNeeded
         let center = NotificationCenter.default
         center.addObserver(self, selector: #selector(willDeactivate), name: UIScene.willDeactivateNotification, object: nil)
         center.addObserver(self, selector: #selector(didActivate), name: UIScene.didActivateNotification, object: nil)
@@ -25,7 +29,7 @@ public final class PrivacyShield: NSObject {
     @objc private func didDisconnect(_ note: Notification) { forget(note.object as? UIWindowScene) }
 
     private func cover(_ scene: UIWindowScene?) {
-        guard let scene else { return }
+        guard let scene, isNeeded() else { return }
         let key = ObjectIdentifier(scene)
         let window = covers[key] ?? {
             let window = UIWindow(windowScene: scene)

@@ -41,10 +41,10 @@ final class VNCSession {
     var scrollSpeedOverride: Double?
     static let defaultScrollSpeed = 3.0
     static var globalScrollSpeed: Double {
-        UserDefaults.standard.object(forKey: "scrollSpeed") as? Double ?? defaultScrollSpeed
+        UserDefaults.remote.object(forKey: "scrollSpeed") as? Double ?? defaultScrollSpeed
     }
     var effectiveScrollSpeed: Double { scrollSpeedOverride ?? Self.globalScrollSpeed }
-    var inputMode: InputMode = UserDefaults.standard.string(forKey: "defaultInputMode").flatMap(InputMode.init(rawValue:)) ?? .trackpad
+    var inputMode: InputMode = UserDefaults.remote.string(forKey: "defaultInputMode").flatMap(InputMode.init(rawValue:)) ?? .trackpad
     let modifiers = ModifierState()
     let isDemo: Bool
 
@@ -54,7 +54,7 @@ final class VNCSession {
     private(set) var composeRequests = 0
     /// Open the compose box automatically on a click into text. Read live, so the Settings
     /// switch applies to a session that's already open.
-    var autoCompose: Bool { UserDefaults.standard.object(forKey: "autoCompose") as? Bool ?? true }
+    var autoCompose: Bool { UserDefaults.remote.object(forKey: "autoCompose") as? Bool ?? true }
     /// Off once the user closes the compose box, until the pointer leaves text: in a document
     /// the whole window is an I-beam, and every click would otherwise reopen it.
     @ObservationIgnored private var autoComposeArmed = true

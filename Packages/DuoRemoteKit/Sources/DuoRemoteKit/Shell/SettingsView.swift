@@ -3,13 +3,13 @@ import SwiftUI
 /// App settings. Values live in UserDefaults; sessions read them when they start.
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("defaultInputMode") private var inputMode = InputMode.trackpad.rawValue
-    @AppStorage("scrollSpeed") private var scrollSpeed = VNCSession.defaultScrollSpeed
-    @AppStorage("invertScroll") private var invertScroll = false
-    @AppStorage("pointerSpeed") private var pointerSpeed = 1.0
-    @AppStorage("autoCompose") private var autoCompose = true
-    @AppStorage("effectsEnabled") private var effectsEnabled = true
-    @AppStorage("skyTheme") private var skyTheme = true
+    @AppStorage("defaultInputMode", store: .remote) private var inputMode = InputMode.trackpad.rawValue
+    @AppStorage("scrollSpeed", store: .remote) private var scrollSpeed = VNCSession.defaultScrollSpeed
+    @AppStorage("invertScroll", store: .remote) private var invertScroll = false
+    @AppStorage("pointerSpeed", store: .remote) private var pointerSpeed = 1.0
+    @AppStorage("autoCompose", store: .remote) private var autoCompose = true
+    @AppStorage("effectsEnabled", store: .remote) private var effectsEnabled = true
+    @AppStorage("skyTheme", store: .remote) private var skyTheme = true
 
     private var version: String {
         let info = Bundle.main.infoDictionary
@@ -123,7 +123,7 @@ private struct BuiltInTailscaleSection: View {
         } header: {
             Text("Built-in Tailscale")
         } footer: {
-            Text("Lets DuoRemote reach your Macs through Tailscale on its own, without the Tailscale app's VPN. It joins your tailnet as a device called duoremote. Choose it per Mac under Edit Mac → Connect through. iOS asks to find devices on your local network so it can connect directly when you're at home.")
+            Text("Lets \(AppInfo.name) reach your Macs through Tailscale on its own, without the Tailscale app's VPN. It joins your tailnet as a device called duoremote. Choose it per Mac under Edit Mac → Connect through. iOS asks to find devices on your local network so it can connect directly when you're at home.")
         }
         .confirmationDialog("Sign out of built-in Tailscale?", isPresented: $confirmSignOut, titleVisibility: .visible) {
             Button("Sign Out", role: .destructive) { Task { await tailscale.signOut() } }

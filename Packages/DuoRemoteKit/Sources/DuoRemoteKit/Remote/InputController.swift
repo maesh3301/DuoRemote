@@ -11,7 +11,7 @@ final class InputController {
         /// 5× more). macOS turns each VNC wheel click into only a small scroll, so this is low;
         /// the session's scroll speed (global default or this Mac's override) divides it.
         var baseScrollPointsPerStep: CGFloat = 4
-        var invertScroll = UserDefaults.standard.bool(forKey: "invertScroll")
+        var invertScroll = UserDefaults.remote.bool(forKey: "invertScroll")
         var momentumTimeConstant: CGFloat = 0.35
         var momentumMinSpeed: CGFloat = 300    // pt/s to start momentum
         var momentumStopSpeed: CGFloat = 20
@@ -150,7 +150,7 @@ final class InputController {
 
     /// Settings → Pointer speed (multiplies the curve below).
     static var pointerSpeed: CGFloat {
-        CGFloat(UserDefaults.standard.object(forKey: "pointerSpeed") as? Double ?? 1)
+        CGFloat(UserDefaults.remote.object(forKey: "pointerSpeed") as? Double ?? 1)
     }
 
     /// Pointer acceleration, like a Mac trackpad: 0.4× for slow, precise moves (pt/s), 1× at a

@@ -13,7 +13,7 @@ final class HostStore {
         var hosts: [Host]
     }
 
-    /// - Parameter fileURL: where to persist; defaults to Application Support/hosts.json.
+    /// - Parameter fileURL: where to persist; defaults to the kit's folder under Application Support.
     init(fileURL: URL? = nil, keychain: KeychainStore = KeychainStore()) {
         let url = fileURL ?? Self.defaultFileURL()
         self.fileURL = url
@@ -50,7 +50,7 @@ final class HostStore {
 
     /// At launch: the Keychain outlives the app, so after a fresh install (no saved hosts, no flag)
     /// wipe what an earlier install left; otherwise drop passwords whose Mac is gone.
-    func tidyKeychain(defaults: UserDefaults = .standard) async {
+    func tidyKeychain(defaults: UserDefaults = .remote) async {
         let flag = "keychainInitialised"
         let freshInstall = !defaults.bool(forKey: flag) && !FileManager.default.fileExists(atPath: fileURL.path)
         let known = Set(hosts.map(\.id.uuidString))
@@ -77,8 +77,9 @@ final class HostStore {
     }
 
     private static func defaultFileURL() -> URL {
-        let dir = URL.applicationSupportDirectory
+        let config = RemoteConfiguration.current
+        let dir = config.storageDirectory
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir.appending(path: "hosts.json")
+        return config.hostsFile
     }
 }

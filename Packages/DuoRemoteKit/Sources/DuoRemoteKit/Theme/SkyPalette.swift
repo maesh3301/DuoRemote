@@ -129,7 +129,7 @@ final class SkyTheme {
             rising = args.contains("-skyRising")
         }
         #endif
-        let defaults = UserDefaults.standard
+        let defaults = UserDefaults.remote
         let new = State(
             elevation: elevation, rising: rising,
             follow: defaults.object(forKey: "skyTheme") == nil ? true : defaults.bool(forKey: "skyTheme"),

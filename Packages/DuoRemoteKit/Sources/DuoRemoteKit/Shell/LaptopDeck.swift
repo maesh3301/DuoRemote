@@ -404,7 +404,7 @@ private struct DeckIconButton: View {
 
 /// ☀ by day, ☾ at night, next to the mode switch. Tap it to turn all effects on or off.
 private struct SkyGlyph: View {
-    @AppStorage("effectsEnabled") private var effectsEnabled = true
+    @AppStorage("effectsEnabled", store: .remote) private var effectsEnabled = true
 
     var body: some View {
         let t = SkyTheme.shared
