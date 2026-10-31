@@ -1,6 +1,6 @@
 import Testing
 import CoreGraphics
-@testable import DuoRemote
+@testable import DuoRemoteKit
 
 struct ShellTests {
     let bar = CGRect(x: 0, y: 0, width: 874, height: 56)

@@ -5,13 +5,13 @@ import UIKit
 /// neither the Mac's screen nor any sheet above it (Copy text from screen, the hosts list).
 /// A window of its own above everything; driven by UIKit's scene notifications, which arrive
 /// before the snapshot is taken.
-final class PrivacyShield: NSObject {
-    static let shared = PrivacyShield()
+public final class PrivacyShield: NSObject {
+    public static let shared = PrivacyShield()
 
     private var covers: [ObjectIdentifier: UIWindow] = [:]
     private var started = false
 
-    func start() {
+    public func start() {
         guard !started else { return }
         started = true
         let center = NotificationCenter.default

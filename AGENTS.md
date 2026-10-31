@@ -22,13 +22,15 @@ the simulator. Never commit a team ID, a bundle ID or `Config/Local.xcconfig`.
 
 | Folder | What's there |
 |---|---|
-| `DuoRemote/Session/` | The connection (`VNCSession`), key mapping, sticky modifiers, the Tailscale/credential policy |
-| `DuoRemote/Remote/` | The remote screen: Metal renderer, viewport maths, touch interpreter, mouse/trackpad input |
-| `DuoRemote/Hosts/` | Saved Macs, Keychain, reachability, the session coordinator |
-| `DuoRemote/Keys/` | Key bar, keyboard capture, hardware key mapping |
-| `DuoRemote/Shell/` | Screens and layout, including iPhone Duo laptop pose |
-| `DuoRemote/Theme/` | The sky palette and deck effects |
-| `DuoRemoteTests/` | Swift Testing tests for the pure logic |
+| `DuoRemote/` | The app itself: a thin wrapper that adds the keyboard block, privacy cover and crash reports |
+| `Packages/DuoRemoteKit/` | Everything else, so DuoRemote can also run inside another app |
+| `Sources/DuoRemoteKit/Session/` | The connection (`VNCSession`), key mapping, sticky modifiers, the Tailscale/credential policy |
+| `Sources/DuoRemoteKit/Remote/` | The remote screen: Metal renderer, viewport maths, touch interpreter, mouse/trackpad input |
+| `Sources/DuoRemoteKit/Hosts/` | Saved Macs, Keychain, reachability, the session coordinator |
+| `Sources/DuoRemoteKit/Keys/` | Key bar, keyboard capture, hardware key mapping |
+| `Sources/DuoRemoteKit/Shell/` | Screens and layout, including iPhone Duo laptop pose |
+| `Sources/DuoRemoteKit/Theme/` | The sky palette and deck effects |
+| `Tests/DuoRemoteKitTests/` | Swift Testing tests for the pure logic |
 | `Vendor/RoyalVNCKit/` | Vendored, patched RoyalVNCKit 1.1.0 |
 | `Vendor/TailscaleKit/` | Local package for TailscaleKit (built by `scripts/build-tailscalekit.sh`, not committed) |
 

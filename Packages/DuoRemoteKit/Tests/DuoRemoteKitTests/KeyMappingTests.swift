@@ -1,6 +1,6 @@
 import Testing
 @preconcurrency import RoyalVNCKit
-@testable import DuoRemote
+@testable import DuoRemoteKit
 
 @MainActor
 struct KeyMappingTests {

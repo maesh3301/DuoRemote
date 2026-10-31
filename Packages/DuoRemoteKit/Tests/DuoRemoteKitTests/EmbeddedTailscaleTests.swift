@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import DuoRemote
+@testable import DuoRemoteKit
 
 struct EmbeddedTailscaleTests {
     private typealias Node = EmbeddedTailnetStatus.Node

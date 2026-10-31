@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import DuoRemote
+@testable import DuoRemoteKit
 
 @MainActor
 struct HostsTests {

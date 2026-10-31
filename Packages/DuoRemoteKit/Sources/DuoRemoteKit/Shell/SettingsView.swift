@@ -153,7 +153,7 @@ private struct SkyPreview: View {
 
 /// Third-party licences, which must ship with every build (Acknowledgements.txt).
 private struct AcknowledgementsView: View {
-    private let text = Bundle.main.url(forResource: "Acknowledgements", withExtension: "txt")
+    private let text = Bundle.module.url(forResource: "Acknowledgements", withExtension: "txt")
         .flatMap { try? String(contentsOf: $0, encoding: .utf8) } ?? ""
 
     var body: some View {

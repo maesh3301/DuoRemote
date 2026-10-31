@@ -1,7 +1,7 @@
 import Testing
 import UIKit
 @preconcurrency import RoyalVNCKit
-@testable import DuoRemote
+@testable import DuoRemoteKit
 
 @MainActor
 struct KeysTests {

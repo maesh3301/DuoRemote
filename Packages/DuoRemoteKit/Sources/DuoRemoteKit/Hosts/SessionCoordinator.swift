@@ -24,7 +24,7 @@ enum RetryPolicy {
 
 /// Owns the active session and its lifecycle (connect, credentials, background, reconnect).
 @Observable
-final class SessionCoordinator {
+public final class SessionCoordinator {
     let store: HostStore
     private(set) var active: VNCSession?
     private(set) var activeHost: Host?
@@ -62,6 +62,21 @@ final class SessionCoordinator {
         self.store = store
     }
 
+    public convenience init() {
+        self.init(store: HostStore())
+    }
+
+    /// What needs doing once before the first connect: starts built-in Tailscale if it's turned on
+    /// and tidies the Keychain. An app calls this at launch.
+    public func prepare() async {
+        EmbeddedTailscale.shared.startIfEnabled()
+        await store.tidyKeychain()
+        #if DEBUG
+        applyLaunchArguments()
+        #endif
+        warmUpBuiltInTailscale()
+    }
+
     // MARK: Connecting
 
     /// Connects using the saved username + Keychain password, or asks for them.
@@ -95,7 +110,7 @@ final class SessionCoordinator {
     }
 
     /// User-initiated disconnect.
-    func disconnect() {
+    public func disconnect() {
         cancelTasks()
         observationGeneration += 1
         resumeHost = nil
@@ -280,7 +295,7 @@ final class SessionCoordinator {
         Task { await EmbeddedTailscale.shared.warmUp(names) }
     }
 
-    func scenePhaseChanged(_ newPhase: ScenePhase) {
+    public func scenePhaseChanged(_ newPhase: ScenePhase) {
         phase = newPhase
         if newPhase == .active { warmUpBuiltInTailscale() }
         switch newPhase {

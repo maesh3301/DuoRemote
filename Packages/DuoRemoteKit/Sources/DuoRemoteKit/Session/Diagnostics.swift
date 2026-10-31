@@ -3,8 +3,8 @@ import MetricKit
 
 /// Saves MetricKit crash/hang diagnostics (delivered by iOS on the next launch after a crash or
 /// hang) as JSON files, so they can be shared from the app instead of waiting for TestFlight.
-nonisolated final class Diagnostics: NSObject, MXMetricManagerSubscriber, @unchecked Sendable {
-    static let shared = Diagnostics()
+public nonisolated final class Diagnostics: NSObject, MXMetricManagerSubscriber, @unchecked Sendable {
+    public static let shared = Diagnostics()
 
     static var folder: URL {
         let url = URL.documentsDirectory.appending(path: "Diagnostics", directoryHint: .isDirectory)
@@ -12,13 +12,13 @@ nonisolated final class Diagnostics: NSObject, MXMetricManagerSubscriber, @unche
         return url
     }
 
-    func start() {
+    public func start() {
         MXMetricManager.shared.add(self)
         // Also save anything iOS has already queued for us.
         save(MXMetricManager.shared.pastDiagnosticPayloads)
     }
 
-    func didReceive(_ payloads: [MXDiagnosticPayload]) {
+    public func didReceive(_ payloads: [MXDiagnosticPayload]) {
         save(payloads)
     }
 

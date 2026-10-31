@@ -29,10 +29,10 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "0AA9C39C38772E5EBB33AA54"
-               BuildableName = "DuoRemoteTests.xctest"
-               BlueprintName = "DuoRemoteTests"
-               ReferencedContainer = "container:DuoRemote.xcodeproj">
+               BlueprintIdentifier = "DuoRemoteKitTests"
+               BuildableName = "DuoRemoteKitTests"
+               BlueprintName = "DuoRemoteKitTests"
+               ReferencedContainer = "container:Packages/DuoRemoteKit">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -58,10 +58,10 @@
             parallelizable = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "0AA9C39C38772E5EBB33AA54"
-               BuildableName = "DuoRemoteTests.xctest"
-               BlueprintName = "DuoRemoteTests"
-               ReferencedContainer = "container:DuoRemote.xcodeproj">
+               BlueprintIdentifier = "DuoRemoteKitTests"
+               BuildableName = "DuoRemoteKitTests"
+               BlueprintName = "DuoRemoteKitTests"
+               ReferencedContainer = "container:Packages/DuoRemoteKit">
             </BuildableReference>
          </TestableReference>
       </Testables>

@@ -17,7 +17,7 @@ See **Building** in the [README](README.md). Run the tests with ⌘U before open
 - Swift 6, with the main actor as the default isolation. Use `@Observable`, not `ObservableObject`.
 - Never base layout on the device model, idiom, orientation or `UIScreen.main`. Read the space a view is given (this is what makes the iPhone Duo work).
 - Keep comments short and about *why*, not *what*.
-- Add tests (Swift Testing, in `DuoRemoteTests/`) for pure logic: viewport maths, gestures, key mapping and so on.
+- Add tests (Swift Testing, in `Packages/DuoRemoteKit/Tests/`) for pure logic: viewport maths, gestures, key mapping and so on.
 - No third-party SDKs, analytics or accounts. Passwords go in the Keychain only.
 - RoyalVNCKit is vendored in `Vendor/RoyalVNCKit`. If you change it, record the change in `Vendor/RoyalVNCKit/PATCHES.md`.
 

@@ -1,11 +1,27 @@
 import SwiftUI
 
 /// Hosts list ↔ session screen, cross-faded.
-struct RootView: View {
+public struct RemoteRootView: View {
     @State var coordinator: SessionCoordinator
     @Environment(\.scenePhase) private var scenePhase
 
-    var body: some View {
+    public init(coordinator: SessionCoordinator) {
+        _coordinator = State(initialValue: coordinator)
+    }
+
+    public var body: some View {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-layoutLab") {
+            LayoutLab()
+        } else {
+            content
+        }
+        #else
+        content
+        #endif
+    }
+
+    private var content: some View {
         ZStack {
             if let session = coordinator.active {
                 SessionScreen(session: session, coordinator: coordinator)

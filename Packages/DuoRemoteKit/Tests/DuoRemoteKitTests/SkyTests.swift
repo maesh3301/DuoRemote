@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import DuoRemote
+@testable import DuoRemoteKit
 
 struct SkyTests {
     private func date(_ iso: String) -> Date { ISO8601DateFormatter().date(from: iso)! }

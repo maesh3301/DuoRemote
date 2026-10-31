@@ -1,7 +1,7 @@
 import Testing
 import Foundation
 import CoreGraphics
-@testable import DuoRemote
+@testable import DuoRemoteKit
 
 @MainActor
 struct TouchInterpreterTests {
