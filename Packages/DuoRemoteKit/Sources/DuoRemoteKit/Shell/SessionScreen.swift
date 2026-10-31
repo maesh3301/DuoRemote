@@ -23,6 +23,7 @@ struct SessionScreen: View {
     /// Full window size from a keyboard-independent view (laptop pose is pinned to this).
     @State private var fullSize: CGSize = .zero
     @AppStorage("deckMode", store: .remote) private var deckMode: DeckMode = .trackpad
+    @Environment(\.remoteExit) private var exit
 
     #if DEBUG
     private let forceLaptop = ProcessInfo.processInfo.arguments.contains("-laptopDemo")
@@ -312,11 +313,15 @@ private struct SessionBar: View {
                 .labelStyle(.iconOnly)
                 .frame(minWidth: 36, minHeight: 36)
             SessionMenu(session: session, coordinator: coordinator)
+            if let exit {
+                Button(exit.title, systemImage: "arrow.uturn.backward", action: exit.action)
+                    .barButton()
+            }
             Button("Disconnect", systemImage: "rectangle.portrait.and.arrow.right") {
                 coordinator.disconnect()     // → back to the hosts list
             }
             .barButton()
-            .tint(.red)
+            .foregroundStyle(.red)   // not tint: a host's foreground style would override that
         }
         .padding(.horizontal, 8)
     }

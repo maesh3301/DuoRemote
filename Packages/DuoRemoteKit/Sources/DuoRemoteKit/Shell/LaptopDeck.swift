@@ -15,6 +15,7 @@ struct LaptopDeck: View {
     @Binding var composeShown: Bool
     var bottomInset: CGFloat = 0
     @State private var touches = TrackpadTouches()
+    @Environment(\.remoteExit) private var exit
 
     var body: some View {
         VStack(spacing: 12) {
@@ -76,6 +77,9 @@ struct LaptopDeck: View {
                     SessionMenu(session: session, coordinator: coordinator)
                         .frame(width: 38, height: 38)
                         .glassEffect(.regular.interactive(), in: .circle)
+                    if let exit {
+                        DeckIconButton(systemImage: "arrow.uturn.backward", label: exit.title) { exit.action() }
+                    }
                     DeckIconButton(systemImage: "rectangle.portrait.and.arrow.right", label: "Disconnect", tint: .red) {
                         coordinator.disconnect()
                     }
