@@ -2,6 +2,8 @@
 # Builds TailscaleKit.xcframework from a pinned libtailscale commit into Vendor/TailscaleKit.
 # Needs Go (brew install go). The framework is large and not committed.
 set -euo pipefail
+# On a fresh clone there is nothing for the clean-up below to match.
+setopt null_glob
 
 LIBTAILSCALE_COMMIT=d1dc45d
 ROOT=${0:A:h:h}
