@@ -23,7 +23,6 @@ struct SessionScreen: View {
     /// Full window size from a keyboard-independent view (laptop pose is pinned to this).
     @State private var fullSize: CGSize = .zero
     @AppStorage("deckMode", store: .remote) private var deckMode: DeckMode = .trackpad
-    @Environment(\.remoteExit) private var exit
 
     #if DEBUG
     private let forceLaptop = ProcessInfo.processInfo.arguments.contains("-laptopDemo")
@@ -246,6 +245,7 @@ struct SessionScreen: View {
 
 /// The key bar, split either side of a vertical fold when one crosses it.
 private struct SessionBar: View {
+    @Environment(\.remoteExit) private var exit
     let session: VNCSession
     let coordinator: SessionCoordinator
     let split: FoldSplit?
