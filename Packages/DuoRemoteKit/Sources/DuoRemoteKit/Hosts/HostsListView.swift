@@ -19,7 +19,6 @@ struct HostsListView: View {
         }
     }
 
-    @Environment(\.remoteExit) private var exit
     @State private var editor: EditorTarget?
     @State private var showSettings = false
     @State private var pendingDelete: Host?
@@ -27,8 +26,12 @@ struct HostsListView: View {
     @State private var showWelcome = false
     @AppStorage("hasSeenWelcome", store: .remote) private var hasSeenWelcome = false
 
-    init(coordinator: SessionCoordinator) {
+    /// Inside a host app, its navigation is the only stack.
+    let ownsNavigation: Bool
+
+    init(coordinator: SessionCoordinator, ownsNavigation: Bool = true) {
         self.coordinator = coordinator
+        self.ownsNavigation = ownsNavigation
     }
 
     private var store: HostStore { coordinator.store }
@@ -37,8 +40,7 @@ struct HostsListView: View {
     private var probeKey: [String] { store.hosts.map { "\($0.id)\($0.hostname):\($0.port)/\($0.route.rawValue)" } }
 
     var body: some View {
-        // Inside a host app, its navigation is the only stack.
-        if exit == nil {
+        if ownsNavigation {
             NavigationStack {
                 list.toolbarVisibility(.hidden, for: .navigationBar)
             }

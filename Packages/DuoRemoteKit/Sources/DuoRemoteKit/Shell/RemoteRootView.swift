@@ -1,15 +1,12 @@
 import SwiftUI
 
-/// Hosts list ↔ session screen, cross-faded.
+/// Hosts list ↔ session screen, cross-faded: all of an app that is only DuoRemote.
 public struct RemoteRootView: View {
     @State var coordinator: SessionCoordinator
-    /// Set when Remote runs inside another app, whose navigation it then sits in.
-    let exit: RemoteExit?
     @Environment(\.scenePhase) private var scenePhase
 
-    public init(coordinator: SessionCoordinator, exit: RemoteExit? = nil) {
+    public init(coordinator: SessionCoordinator) {
         _coordinator = State(initialValue: coordinator)
-        self.exit = exit
     }
 
     public var body: some View {
@@ -39,13 +36,44 @@ public struct RemoteRootView: View {
             CredentialSheet(host: host, coordinator: coordinator)
         }
         .onChange(of: scenePhase) { _, phase in
-            // A host app reports this itself: it has to arrive while Remote is off screen too.
-            if exit == nil { coordinator.scenePhaseChanged(phase) }
+            coordinator.scenePhaseChanged(phase)
         }
         .onAppear { SkyTheme.shared.start() }
-        // In a session the screen's edges belong to the Mac, so the host's bar and back swipe go.
-        .toolbarVisibility(coordinator.active == nil ? .automatic : .hidden, for: .navigationBar)
-        .navigationBarBackButtonHidden(coordinator.active != nil)
-        .environment(\.remoteExit, exit)
+    }
+}
+
+/// The saved Macs, for a host app's navigation.
+public struct RemoteHostsView: View {
+    @State var coordinator: SessionCoordinator
+
+    public init(coordinator: SessionCoordinator) {
+        _coordinator = State(initialValue: coordinator)
+    }
+
+    public var body: some View {
+        HostsListView(coordinator: coordinator, ownsNavigation: false)
+            .sheet(item: $coordinator.credentialPrompt) { host in
+                CredentialSheet(host: host, coordinator: coordinator)
+            }
+            .onAppear { SkyTheme.shared.start() }
+    }
+}
+
+/// The open session, for a host app to show at the root of its window, above its navigation: the
+/// session lays itself out from the whole window, and a tab view's insets get in the way of that.
+public struct RemoteSessionView: View {
+    let coordinator: SessionCoordinator
+    let exit: RemoteExit
+
+    public init(coordinator: SessionCoordinator, exit: RemoteExit) {
+        self.coordinator = coordinator
+        self.exit = exit
+    }
+
+    public var body: some View {
+        if let session = coordinator.active {
+            SessionScreen(session: session, coordinator: coordinator)
+                .environment(\.remoteExit, exit)
+        }
     }
 }
