@@ -66,7 +66,9 @@ struct LaptopDeck: View {
             }
             Spacer(minLength: 0)
             HStack(spacing: 8) {
-                SkyGlyph()
+                // A row too wide for the deck pushes the whole layout sideways, and the way back to
+                // a host app needs this one's room.
+                if exit == nil { SkyGlyph() }
                 DeckModePicker(mode: $mode) { m in
                     if m == .keyboard { keyboardShown = true }   // re-show even if already selected
                 }

@@ -59,8 +59,9 @@ public struct RemoteHostsView: View {
     }
 }
 
-/// The open session, for a host app to show at the root of its window, above its navigation: the
-/// session lays itself out from the whole window, and a tab view's insets get in the way of that.
+/// The open session, for a host app to show at the root of its window, above its navigation. That
+/// gives it the same place in the view hierarchy as in an app of its own, which hiding the bars,
+/// deferring edge gestures and keyboard avoidance all rely on.
 public struct RemoteSessionView: View {
     let coordinator: SessionCoordinator
     let exit: RemoteExit

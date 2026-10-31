@@ -32,5 +32,8 @@ Config/Local.xcconfig
 .idea/
 .vscode/
 
+# Written when the package is built by itself
+Packages/DuoRemoteKit/Package.resolved
+
 # Built by scripts/build-tailscalekit.sh
 Vendor/TailscaleKit/TailscaleKit.xcframework/
