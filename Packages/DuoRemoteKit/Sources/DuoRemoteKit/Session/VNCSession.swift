@@ -377,6 +377,24 @@ final class VNCSession {
         }
     }
 
+    /// For the Mac's lock screen, when the person asks: Shift wakes a sleeping display without
+    /// typing anything, then, once the password field is up, the password and Return go in.
+    /// Neither the password nor its length is logged.
+    func unlock(password: String) {
+        let keys = KeyMapping.unlockKeys(for: password)
+        guard !keys.isEmpty, let c = connection else { return }
+        c.tap(.shift)
+        note("unlock: typing the saved password")
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(Self.unlockWakeDelay))
+            guard let self, case .connected = self.status, let c = self.connection else { return }
+            keys.forEach(c.tap)
+        }
+    }
+
+    /// Long enough for a sleeping display to wake and show its password field.
+    static let unlockWakeDelay = 700
+
     /// Types text without applying the sticky modifiers (compose box).
     func typeRaw(_ text: String) {
         guard let c = connection else { return }

@@ -36,4 +36,11 @@ struct KeyMappingTests {
         #expect(!KeyMapping.pasteNeedsConfirmation([String(repeating: "x", count: 2_000)]))
         #expect(KeyMapping.pasteNeedsConfirmation([String(repeating: "x", count: 2_001)]))
     }
+
+    @Test func unlockTypesThePasswordThenReturnOnly() {
+        #expect(KeyMapping.unlockKeys(for: "pä ss") == KeyMapping.keyCodes(for: "pä ss") + [.return])
+        #expect(KeyMapping.unlockKeys(for: "ab\ncd\r") == KeyMapping.keyCodes(for: "abcd") + [.return])
+        #expect(KeyMapping.unlockKeys(for: "").isEmpty)
+        #expect(KeyMapping.unlockKeys(for: "\n").isEmpty)
+    }
 }

@@ -145,6 +145,21 @@ public final class SessionCoordinator {
     /// The Mac a session is open with.
     public var activeMacName: String? { activeHost?.name }
 
+    /// Whether Unlock Mac can type a password: connected, with the password this session signed
+    /// in with. That password already passed the route check, so it goes nowhere new.
+    public var canUnlock: Bool {
+        guard let active, case .connected = active.status, let password = credentials?.password else { return false }
+        return !password.isEmpty
+    }
+
+    /// Types this session's password into the Mac's lock screen. Only ever on the person's tap:
+    /// the app can't see whether the Mac is locked, and an unlocked Mac would get the password in
+    /// whatever has focus.
+    public func unlockMac() {
+        guard canUnlock, let active, let password = credentials?.password else { return }
+        active.unlock(password: password)
+    }
+
     /// User-initiated disconnect.
     public func disconnect() {
         cancelTasks()

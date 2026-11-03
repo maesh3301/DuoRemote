@@ -6,6 +6,13 @@ enum KeyMapping {
         text.flatMap(keyCodes(for:))
     }
 
+    /// What Unlock Mac types: the password, without any line break in it, then Return. Nothing
+    /// at all for an empty password, so Return alone never goes to the Mac.
+    static func unlockKeys(for password: String) -> [VNCKeyCode] {
+        let keys = keyCodes(for: password.filter { !$0.isNewline })
+        return keys.isEmpty ? [] : keys + [.return]
+    }
+
     /// Line breaks of every kind (CR LF, CR, LS, PS, NEL) as "\n", so no stray one becomes Return.
     static func normalizingLineBreaks(_ text: String) -> String {
         var out = String.UnicodeScalarView()

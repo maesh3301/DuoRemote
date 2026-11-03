@@ -25,6 +25,12 @@ struct SessionMenu: View {
             Toggle(isOn: $autoCompose) {
                 Label("Text box on click into text", systemImage: "character.cursor.ibeam")
             }
+            if coordinator.canUnlock {
+                Section {
+                    Button("Unlock Mac", systemImage: "lock.open") { coordinator.unlockMac() }
+                        .accessibilityHint("Types this Mac's password into its lock screen and presses Return")
+                }
+            }
             Section {
                 Button("Zoom to fit", systemImage: "arrow.down.right.and.arrow.up.left") { session.zoomToFit() }
                 Button("Actual pixels", systemImage: "1.magnifyingglass") { session.zoomToActualPixels() }
