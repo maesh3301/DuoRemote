@@ -62,10 +62,13 @@ nonisolated enum EmbeddedTailnet {
 /// DuoRemote's own Tailscale node, so a Mac can be reached without the Tailscale app's VPN.
 /// The node runs in the app (userspace, no VPN profile) and shows up in the tailnet under the configuration's node name.
 @Observable
-final class EmbeddedTailscale {
-    static let shared = EmbeddedTailscale()
+public final class EmbeddedTailscale {
+    public static let shared = EmbeddedTailscale()
 
-    enum State: Equatable {
+    /// How this device shows up in the tailnet.
+    public var nodeName: String { RemoteConfiguration.current.tailscaleNodeName }
+
+    public enum State: Equatable, Sendable {
         case off, starting, needsLogin, running
         case failed(String)
     }
@@ -83,9 +86,9 @@ final class EmbeddedTailscale {
         }
     }
 
-    private(set) var state: State = .off
-    private(set) var loginURL: URL?
-    private(set) var ownAddress: String?
+    public private(set) var state: State = .off
+    public private(set) var loginURL: URL?
+    public private(set) var ownAddress: String?
     private(set) var peers: [EmbeddedTailnetStatus.Node] = []
 
     /// Running and the coordination server has sent the peer list. A node that has just started
@@ -93,7 +96,7 @@ final class EmbeddedTailscale {
     var hasPeerList: Bool { state == .running && !peers.isEmpty }
 
     /// Remembered so the node starts with the app once the user has turned it on.
-    var isEnabled: Bool { UserDefaults.remote.bool(forKey: Self.enabledKey) }
+    public var isEnabled: Bool { UserDefaults.remote.bool(forKey: Self.enabledKey) }
 
     @ObservationIgnored private var node: TailscaleNode?
     @ObservationIgnored private var handle: TailscaleHandle?
@@ -111,7 +114,7 @@ final class EmbeddedTailscale {
 
     /// Starts the node. A node that isn't signed in yet asks for a browser sign-in; with
     /// `openLogin`, that page opens as soon as the sign-in link arrives.
-    func start(openLogin: Bool = false) {
+    public func start(openLogin: Bool = false) {
         if openLogin { openLoginWhenReady = true }
         if state == .needsLogin, openLogin, let loginURL { open(loginURL) }
         guard node == nil, state != .starting else { return }
@@ -134,7 +137,7 @@ final class EmbeddedTailscale {
 
     /// Signs out by discarding this node's keys. Its entry stays in the Tailscale admin console
     /// until it's removed there or expires.
-    func signOut() async {
+    public func signOut() async {
         UserDefaults.remote.set(false, forKey: Self.enabledKey)
         pollTask?.cancel()
         pollTask = nil

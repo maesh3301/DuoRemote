@@ -1,25 +1,25 @@
 import Foundation
 
 /// A saved Mac. The password lives in the Keychain, never here.
-struct Host: Identifiable, Codable, Hashable {
-    var id: UUID = UUID()
-    var name: String
-    var hostname: String          // tailnet name, e.g. "my-mac"
-    var port: UInt16 = 5900
-    var username: String
+public struct Host: Identifiable, Codable, Hashable, Sendable {
+    public var id: UUID = UUID()
+    public var name: String
+    public var hostname: String          // tailnet name, e.g. "my-mac"
+    public var port: UInt16 = 5900
+    public var username: String
     /// SF Symbol name; see `HostSymbol`. nil means `desktopcomputer`.
-    var symbol: String?
-    var lastConnected: Date?
+    public var symbol: String?
+    public var lastConnected: Date?
     /// Per-Mac scroll speed; nil = use the global default (Settings).
-    var scrollSpeed: Double?
+    public var scrollSpeed: Double?
     /// Send the password even when the Mac isn't reached through Tailscale, or asks for a plain
     /// VNC password instead of a macOS sign-in.
-    var allowOutsideTailscale = false
+    public var allowOutsideTailscale = false
     /// How the Mac is reached: the system's network (the Tailscale app, or a local network) or
     /// DuoRemote's built-in Tailscale.
-    var route: HostRoute = .system
+    public var route: HostRoute = .system
 
-    init(id: UUID = UUID(), name: String, hostname: String, port: UInt16 = 5900, username: String,
+    public init(id: UUID = UUID(), name: String, hostname: String, port: UInt16 = 5900, username: String,
          symbol: String? = nil, lastConnected: Date? = nil) {
         self.id = id
         self.name = name
@@ -30,7 +30,7 @@ struct Host: Identifiable, Codable, Hashable {
         self.lastConnected = lastConnected
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
         name = try c.decode(String.self, forKey: .name)
@@ -44,20 +44,20 @@ struct Host: Identifiable, Codable, Hashable {
         route = (try? c.decodeIfPresent(HostRoute.self, forKey: .route)) ?? .system
     }
 
-    var symbolName: String { symbol ?? HostSymbol.defaultName }
+    public var symbolName: String { symbol ?? HostSymbol.defaultName }
 }
 
-enum HostRoute: String, Codable, CaseIterable {
+public enum HostRoute: String, Codable, CaseIterable, Sendable {
     case system
     case embeddedTailscale
 }
 
 /// The Mac icons offered in the editor.
-enum HostSymbol {
-    static let defaultName = "desktopcomputer"
-    static let all = ["macmini", "laptopcomputer", "desktopcomputer", "macstudio", "display"]
+public enum HostSymbol {
+    public static let defaultName = "desktopcomputer"
+    public static let all = ["macmini", "laptopcomputer", "desktopcomputer", "macstudio", "display"]
 
-    static func label(_ name: String) -> String {
+    public static func label(_ name: String) -> String {
         switch name {
         case "macmini": "Mac mini"
         case "laptopcomputer": "MacBook"

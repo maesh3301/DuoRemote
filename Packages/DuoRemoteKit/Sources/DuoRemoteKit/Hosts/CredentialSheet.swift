@@ -76,30 +76,13 @@ struct CredentialSheet: View {
     }
 
     private func connect() {
-        var target = coordinator.store.host(withID: host.id) ?? host
-        if saveInKeychain { target.username = username }
-        if outsideAddress != nil { target.allowOutsideTailscale = allowOutside }
-        coordinator.store.update(target)
-        let keychain = coordinator.store.keychain
-        let id = target.id
-        let secret = saveInKeychain ? password : nil
-        Task {
-            do {
-                if let secret {
-                    try await keychain.setPassword(secret, forHostID: id)
-                } else {
-                    try await keychain.deletePassword(forHostID: id)
-                }
-            } catch {
-                Logger.keychain.error("Couldn't update the saved password: \(String(describing: error), privacy: .public)")
-            }
-        }
-        target.username = username
-        coordinator.credentialPrompt = nil
-        coordinator.connect(target, username: username, password: password, approvedAddress: outsideAddress)
+        coordinator.signIn(host, username: username, password: password, savePassword: saveInKeychain, allowOutside: allowOutside)
     }
 }
 
-enum CredentialText {
-    static let tooLong = "Screen Sharing accepts usernames and passwords up to 63 bytes: about 63 letters, fewer with accents or emoji."
+public enum CredentialText {
+    /// Whether a username or password fits what Screen Sharing accepts.
+    public static func fits(_ text: String) -> Bool { VNCCredentialLimit.fits(text) }
+
+    public static let tooLong = "Screen Sharing accepts usernames and passwords up to 63 bytes: about 63 letters, fewer with accents or emoji."
 }

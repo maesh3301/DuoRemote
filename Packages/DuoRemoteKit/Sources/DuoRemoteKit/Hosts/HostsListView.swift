@@ -677,23 +677,7 @@ struct HostEditor: View {
         result.route = route
 
         if host == nil { store.add(result) } else { store.update(result) }
-
-        if passwordLoaded {
-            let keychain = store.keychain
-            let id = result.id
-            let secret = password
-            Task {
-                do {
-                    if secret.isEmpty {
-                        try await keychain.deletePassword(forHostID: id)
-                    } else {
-                        try await keychain.setPassword(secret, forHostID: id)
-                    }
-                } catch {
-                    Logger.keychain.error("Couldn't update the saved password: \(String(describing: error), privacy: .public)")
-                }
-            }
-        }
+        if passwordLoaded { store.setPassword(password, forHostID: result.id) }
         dismiss()
     }
 }

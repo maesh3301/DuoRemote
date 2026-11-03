@@ -25,16 +25,16 @@ enum RetryPolicy {
 /// Owns the active session and its lifecycle (connect, credentials, background, reconnect).
 @Observable
 public final class SessionCoordinator {
-    let store: HostStore
+    public let store: HostStore
     private(set) var active: VNCSession?
     private(set) var activeHost: Host?
     /// Non-nil → the shell presents `CredentialSheet` for this host.
-    var credentialPrompt: Host?
+    public var credentialPrompt: Host?
     /// Set with `credentialPrompt` when the Mac isn't reached through Tailscale: the address it
     /// resolved to, so the sheet can warn before a password is sent there.
-    private(set) var outsideTailscaleAddress: String?
+    public private(set) var outsideTailscaleAddress: String?
     /// The Mac whose address is being looked up and checked, before anything is sent to it.
-    private(set) var lookingUpHostID: UUID?
+    public private(set) var lookingUpHostID: UUID?
 
     private struct Credentials {
         var username: String
@@ -86,16 +86,32 @@ public final class SessionCoordinator {
     // MARK: Connecting
 
     /// Connects using the saved username + Keychain password, or asks for them.
-    func connect(_ host: Host) {
+    public func connect(_ host: Host) {
         retryAttempt = 0
         startConnect(host, given: nil)
     }
 
     /// Connects with credentials just entered (which may not be saved).
     /// - Parameter approvedAddress: an address outside Tailscale the user agreed to send them to.
-    func connect(_ host: Host, username: String, password: String, approvedAddress: String? = nil) {
+    public func connect(_ host: Host, username: String, password: String, approvedAddress: String? = nil) {
         retryAttempt = 0
         startConnect(host, given: Credentials(username: username, password: password, approvedAddress: approvedAddress))
+    }
+
+    /// Signs in to the Mac being asked about, as entered, and remembers what was asked to be kept.
+    /// - Parameters:
+    ///   - savePassword: keep the password and username for next time, or forget the password.
+    ///   - allowOutside: remember this answer for a Mac not reached through Tailscale.
+    public func signIn(_ host: Host, username: String, password: String, savePassword: Bool, allowOutside: Bool) {
+        let outsideAddress = outsideTailscaleAddress
+        var target = store.host(withID: host.id) ?? host
+        if savePassword { target.username = username }
+        if outsideAddress != nil { target.allowOutsideTailscale = allowOutside }
+        store.update(target)
+        store.setPassword(savePassword ? password : nil, forHostID: target.id)
+        target.username = username
+        credentialPrompt = nil
+        connect(target, username: username, password: password, approvedAddress: outsideAddress)
     }
 
     /// Manual retry from the shell's disconnected overlay. Resets the backoff.

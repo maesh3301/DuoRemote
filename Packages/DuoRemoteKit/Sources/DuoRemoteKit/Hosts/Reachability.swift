@@ -38,31 +38,35 @@ nonisolated struct TCPReachabilityProbe: ReachabilityProbe {
     }
 }
 
-enum ReachabilityState: Equatable {
+public enum ReachabilityState: Equatable, Sendable {
     case checking, online, offline
 }
 
 /// Per-host status for the hosts screen.
 @Observable
-final class ReachabilityModel {
+public final class ReachabilityModel {
     private(set) var states: [UUID: ReachabilityState] = [:]
     @ObservationIgnored private let probe: any ReachabilityProbe
     @ObservationIgnored private var task: Task<Void, Never>?
 
-    init(probe: any ReachabilityProbe = TCPReachabilityProbe()) {
+    init(probe: any ReachabilityProbe) {
         self.probe = probe
+    }
+
+    public convenience init() {
+        self.init(probe: TCPReachabilityProbe())
     }
 
     /// Macs reached through built-in Tailscale aren't probed: their status follows the node's peer
     /// list, live (the system can't connect to them, and the list arrives after the node starts).
-    func state(for host: Host) -> ReachabilityState {
+    public func state(for host: Host) -> ReachabilityState {
         if host.route == .embeddedTailscale { return EmbeddedTailscale.shared.reachability(of: host.hostname) }
         return states[host.id] ?? .checking
     }
 
     /// Probes every host concurrently, cancelling any run in flight.
     @discardableResult
-    func refresh(_ hosts: [Host]) -> Task<Void, Never> {
+    public func refresh(_ hosts: [Host]) -> Task<Void, Never> {
         task?.cancel()
         let probed = hosts.filter { $0.route != .embeddedTailscale }
         for host in probed { states[host.id] = .checking }
@@ -83,5 +87,5 @@ final class ReachabilityModel {
         return new
     }
 
-    func cancel() { task?.cancel() }
+    public func cancel() { task?.cancel() }
 }

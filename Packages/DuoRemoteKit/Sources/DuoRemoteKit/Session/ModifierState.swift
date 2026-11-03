@@ -2,9 +2,9 @@
 import Foundation
 import Observation
 
-enum InputMode: String, CaseIterable, Identifiable {
+public enum InputMode: String, CaseIterable, Identifiable, Sendable {
     case trackpad, direct
-    var id: String { rawValue }
+    public var id: String { rawValue }
 }
 
 enum Modifier: CaseIterable, Hashable {

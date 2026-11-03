@@ -4,8 +4,8 @@ import os
 
 /// Saved hosts, persisted as JSON in Application Support. Passwords are not here (see `keychain`).
 @Observable
-final class HostStore {
-    private(set) var hosts: [Host]
+public final class HostStore {
+    public private(set) var hosts: [Host]
     @ObservationIgnored let keychain: KeychainStore
     @ObservationIgnored private let fileURL: URL
 
@@ -23,12 +23,12 @@ final class HostStore {
         hosts = data.flatMap { try? JSONDecoder().decode(Payload.self, from: $0) }?.hosts ?? []
     }
 
-    func add(_ host: Host) {
+    public func add(_ host: Host) {
         hosts.append(host)
         save()
     }
 
-    func update(_ host: Host) {
+    public func update(_ host: Host) {
         guard let index = hosts.firstIndex(where: { $0.id == host.id }) else { return }
         hosts[index] = host
         save()
@@ -36,7 +36,7 @@ final class HostStore {
 
     /// Removes the host and its Keychain password. (A password left behind by a failed delete is
     /// removed by `tidyKeychain` on the next launch.)
-    func delete(_ host: Host) {
+    public func delete(_ host: Host) {
         hosts.removeAll { $0.id == host.id }
         save()
         let keychain = keychain
@@ -68,7 +68,28 @@ final class HostStore {
         }
     }
 
-    func host(withID id: UUID) -> Host? { hosts.first { $0.id == id } }
+    public func host(withID id: UUID) -> Host? { hosts.first { $0.id == id } }
+
+    /// The Mac's saved password, for showing in an editor.
+    public func savedPassword(for host: Host) async -> String? {
+        (try? await keychain.password(forHostID: host.id)) ?? nil
+    }
+
+    /// Saves the Mac's password, or forgets it when there's none. It never goes in the host file.
+    public func setPassword(_ password: String?, forHostID id: UUID) {
+        let keychain = keychain
+        Task {
+            do {
+                if let password, !password.isEmpty {
+                    try await keychain.setPassword(password, forHostID: id)
+                } else {
+                    try await keychain.deletePassword(forHostID: id)
+                }
+            } catch {
+                Logger.keychain.error("Couldn't update the saved password: \(String(describing: error), privacy: .public)")
+            }
+        }
+    }
 
     private func save() {
         let payload = Payload(hosts: hosts)
