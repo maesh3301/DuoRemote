@@ -59,11 +59,14 @@ struct LaptopDeck: View {
 
     // MARK: Header — tools left, mode switch centre, session right
 
+    private var groupSpacing: CGFloat { coordinator.unlockOffered ? 5 : 8 }
+
     private var header: some View {
         // Must fit the folded-out width (~466 pt): "Copy text from screen" lives in the ••• menu.
-        HStack(spacing: 8) {
-            GlassEffectContainer(spacing: 8) {
-                HStack(spacing: 8) {
+        // Everything sits a little closer while Unlock Mac is offered, so the switch keeps its size.
+        HStack(spacing: coordinator.unlockOffered ? 2 : 8) {
+            GlassEffectContainer(spacing: groupSpacing) {
+                HStack(spacing: groupSpacing) {
                     DeckIconButton(systemImage: "doc.on.clipboard", label: "Paste to Mac", action: session.pasteClipboard)
                         .pasteBeamSource()
                     DeckIconButton(systemImage: composeShown ? "text.bubble.fill" : "text.bubble", label: "Text box",
@@ -86,8 +89,8 @@ struct LaptopDeck: View {
             }
             .animation(.snappy, value: coordinator.unlockOffered)
             Spacer(minLength: 0)
-            GlassEffectContainer(spacing: 8) {
-                HStack(spacing: 8) {
+            GlassEffectContainer(spacing: groupSpacing) {
+                HStack(spacing: groupSpacing) {
                     SessionMenu(session: session, coordinator: coordinator)
                         .frame(width: 38, height: 38)
                         .glassEffect(.regular.interactive(), in: .circle)
@@ -230,9 +233,8 @@ private struct DeckModePicker: View {
         // Both segments show labels, or (when narrow) both show icons only.
         Group {
             if let unlock {
-                // Tighter segments, so the deck still fits beside a host app's way back.
                 HStack(spacing: 2) {
-                    segments(compact: true, tight: true)
+                    segments(compact: true)
                     Button(action: unlock) {
                         Image(systemName: "lock.open")
                             .font(.subheadline.weight(.semibold))
@@ -258,14 +260,14 @@ private struct DeckModePicker: View {
         .sensoryFeedback(.selection, trigger: mode)
     }
 
-    private func segments(compact: Bool, tight: Bool = false) -> some View {
+    private func segments(compact: Bool) -> some View {
         HStack(spacing: 2) {
-            segment(.trackpad, "Trackpad", "rectangle.and.hand.point.up.left", compact, tight)
-            segment(.keyboard, "Keyboard", "keyboard", compact, tight)
+            segment(.trackpad, "Trackpad", "rectangle.and.hand.point.up.left", compact)
+            segment(.keyboard, "Keyboard", "keyboard", compact)
         }
     }
 
-    private func segment(_ m: DeckMode, _ title: String, _ icon: String, _ compact: Bool, _ tight: Bool = false) -> some View {
+    private func segment(_ m: DeckMode, _ title: String, _ icon: String, _ compact: Bool) -> some View {
         Button {
             mode = m
             onSelect(m)
@@ -274,7 +276,7 @@ private struct DeckModePicker: View {
                 if compact { Image(systemName: icon) } else { Label(title, systemImage: icon).fixedSize() }
             }
                 .font(.subheadline.weight(.medium))
-                .padding(.horizontal, tight ? 4 : 12)
+                .padding(.horizontal, 12)
                 .frame(height: 34)
                 .foregroundStyle(mode == m ? .primary : .secondary)
                 .background {
