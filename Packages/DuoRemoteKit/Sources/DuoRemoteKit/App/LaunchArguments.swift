@@ -5,6 +5,8 @@ extension SessionCoordinator {
     func applyLaunchArguments() {
         let args = ProcessInfo.processInfo.arguments
         if args.contains("-demoSession") { openDemo() }
+        // `-unlockOffer`: show the deck's Unlock Mac button, to check its layout (it does nothing in the demo).
+        if args.contains("-unlockOffer") { unlockOffered = true }
         if let i = args.firstIndex(of: "-vncSmoke"), i + 1 < args.count {
             VNCSmokeTest.run(host: args[i + 1])
         }

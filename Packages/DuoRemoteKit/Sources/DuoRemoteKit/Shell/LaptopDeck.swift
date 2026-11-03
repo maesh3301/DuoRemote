@@ -17,6 +17,14 @@ struct LaptopDeck: View {
     @State private var touches = TrackpadTouches()
     @Environment(\.remoteExit) private var exit
 
+    /// `-fakeExit` lays the deck out as inside a host app, to check that it still fits.
+    private var deckExit: RemoteExit? {
+        #if DEBUG
+        if exit == nil, ProcessInfo.processInfo.arguments.contains("-fakeExit") { return RemoteExit(title: "Back") {} }
+        #endif
+        return exit
+    }
+
     var body: some View {
         VStack(spacing: 12) {
             deckContent
@@ -68,18 +76,22 @@ struct LaptopDeck: View {
             HStack(spacing: 8) {
                 // A row too wide for the deck pushes the whole layout sideways, and the way back to
                 // a host app needs this one's room.
-                if exit == nil { SkyGlyph() }
-                DeckModePicker(mode: $mode) { m in
+                // The sky makes room while Unlock Mac is offered.
+                if deckExit == nil, !coordinator.unlockOffered { SkyGlyph() }
+                // Right after a connect, when the Mac most likely shows its lock screen, the switch
+                // grows an Unlock Mac button.
+                DeckModePicker(mode: $mode, unlock: coordinator.unlockOffered ? { coordinator.unlockMac() } : nil) { m in
                     if m == .keyboard { keyboardShown = true }   // re-show even if already selected
                 }
             }
+            .animation(.snappy, value: coordinator.unlockOffered)
             Spacer(minLength: 0)
             GlassEffectContainer(spacing: 8) {
                 HStack(spacing: 8) {
                     SessionMenu(session: session, coordinator: coordinator)
                         .frame(width: 38, height: 38)
                         .glassEffect(.regular.interactive(), in: .circle)
-                    if let exit {
+                    if let exit = deckExit {
                         DeckIconButton(systemImage: "arrow.uturn.backward", label: exit.title) { exit.action() }
                     }
                     DeckIconButton(systemImage: "rectangle.portrait.and.arrow.right", label: "Disconnect", tint: .red) {
@@ -209,28 +221,51 @@ private struct TrackpadPad: View {
 /// Segmented glass switch with a sliding highlight.
 private struct DeckModePicker: View {
     @Binding var mode: DeckMode
+    /// Set right after a connect: the switch ends in an Unlock Mac button, and shows icons only.
+    var unlock: (() -> Void)? = nil
     var onSelect: (DeckMode) -> Void = { _ in }
     @Namespace private var ns
 
     var body: some View {
         // Both segments show labels, or (when narrow) both show icons only.
-        ViewThatFits(in: .horizontal) {
-            segments(compact: false)
-            segments(compact: true)
+        Group {
+            if let unlock {
+                // Tighter segments, so the deck still fits beside a host app's way back.
+                HStack(spacing: 2) {
+                    segments(compact: true, tight: true)
+                    Button(action: unlock) {
+                        Image(systemName: "lock.open")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.white)
+                            .frame(width: 34, height: 34)
+                            .background(Circle().fill(.blue))
+                            .contentShape(.circle)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Unlock Mac")
+                    .accessibilityHint("Types this Mac's password into its lock screen and presses Return")
+                    .transition(.scale(scale: 0.5).combined(with: .opacity))
+                }
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    segments(compact: false)
+                    segments(compact: true)
+                }
+            }
         }
         .padding(3)
         .glassEffect(.regular, in: .capsule)
         .sensoryFeedback(.selection, trigger: mode)
     }
 
-    private func segments(compact: Bool) -> some View {
+    private func segments(compact: Bool, tight: Bool = false) -> some View {
         HStack(spacing: 2) {
-            segment(.trackpad, "Trackpad", "rectangle.and.hand.point.up.left", compact)
-            segment(.keyboard, "Keyboard", "keyboard", compact)
+            segment(.trackpad, "Trackpad", "rectangle.and.hand.point.up.left", compact, tight)
+            segment(.keyboard, "Keyboard", "keyboard", compact, tight)
         }
     }
 
-    private func segment(_ m: DeckMode, _ title: String, _ icon: String, _ compact: Bool) -> some View {
+    private func segment(_ m: DeckMode, _ title: String, _ icon: String, _ compact: Bool, _ tight: Bool = false) -> some View {
         Button {
             mode = m
             onSelect(m)
@@ -239,7 +274,7 @@ private struct DeckModePicker: View {
                 if compact { Image(systemName: icon) } else { Label(title, systemImage: icon).fixedSize() }
             }
                 .font(.subheadline.weight(.medium))
-                .padding(.horizontal, 12)
+                .padding(.horizontal, tight ? 4 : 12)
                 .frame(height: 34)
                 .foregroundStyle(mode == m ? .primary : .secondary)
                 .background {

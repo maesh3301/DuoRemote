@@ -312,6 +312,13 @@ private struct SessionBar: View {
             Button("Hide keys", systemImage: "chevron.down", action: collapse)
                 .labelStyle(.iconOnly)
                 .frame(minWidth: 36, minHeight: 36)
+            if coordinator.unlockOffered {
+                Button("Unlock Mac", systemImage: "lock.open") { coordinator.unlockMac() }
+                    .barButton()
+                    .foregroundStyle(.tint)
+                    .accessibilityHint("Types this Mac's password into its lock screen and presses Return")
+                    .transition(.scale(scale: 0.6).combined(with: .opacity))
+            }
             SessionMenu(session: session, coordinator: coordinator)
             if let exit {
                 Button(exit.title, systemImage: "arrow.uturn.backward", action: exit.action)
@@ -324,6 +331,7 @@ private struct SessionBar: View {
             .foregroundStyle(.red)   // not tint: a host's foreground style would override that
         }
         .padding(.horizontal, 8)
+        .animation(.snappy, value: coordinator.unlockOffered)
     }
 }
 

@@ -35,6 +35,11 @@ public final class SessionCoordinator {
     public private(set) var outsideTailscaleAddress: String?
     /// The Mac whose address is being looked up and checked, before anything is sent to it.
     public private(set) var lookingUpHostID: UUID?
+    /// True for a while after a session connects or reconnects, when a Mac most likely shows its
+    /// lock screen, so the deck can offer Unlock Mac right there. Unlocking, disconnecting or
+    /// `unlockOfferDuration` passing withdraws it.
+    public internal(set) var unlockOffered = false
+    static let unlockOfferDuration: Duration = .seconds(120)
 
     private struct Credentials {
         var username: String
@@ -53,6 +58,7 @@ public final class SessionCoordinator {
     @ObservationIgnored private var resumeHost: Host?
     @ObservationIgnored private var observationGeneration = 0
     @ObservationIgnored private var isPrepared = false
+    @ObservationIgnored private var unlockOfferTask: Task<Void, Never>?
 
     #if DEBUG
     /// `-vncTraceRoute`: connect this way regardless of the saved setting (not saved).
@@ -157,7 +163,25 @@ public final class SessionCoordinator {
     /// whatever has focus.
     public func unlockMac() {
         guard canUnlock, let active, let password = credentials?.password else { return }
+        withdrawUnlockOffer()
         active.unlock(password: password)
+    }
+
+    private func offerUnlock() {
+        guard canUnlock else { return }
+        unlockOffered = true
+        unlockOfferTask?.cancel()
+        unlockOfferTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.unlockOfferDuration)
+            guard !Task.isCancelled else { return }
+            self?.unlockOffered = false
+        }
+    }
+
+    private func withdrawUnlockOffer() {
+        unlockOfferTask?.cancel()
+        unlockOfferTask = nil
+        if unlockOffered { unlockOffered = false }
     }
 
     /// User-initiated disconnect.
@@ -166,6 +190,7 @@ public final class SessionCoordinator {
         observationGeneration += 1
         resumeHost = nil
         credentials = nil
+        withdrawUnlockOffer()
         active?.disconnect()
         // Drop the cached session: it holds the full-resolution framebuffer.
         if let id = activeHost?.id { sessions[id] = nil }
@@ -301,6 +326,7 @@ public final class SessionCoordinator {
 
     private func statusChanged(_ status: VNCSession.Status) {
         updateIdleTimer()
+        if case .connected = status { offerUnlock() } else { withdrawUnlockOffer() }
         // We disconnect on purpose when backgrounding; don't react to that.
         guard resumeHost == nil else { return }
         switch status {
