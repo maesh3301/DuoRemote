@@ -59,12 +59,23 @@ struct LaptopDeck: View {
 
     // MARK: Header — tools left, mode switch centre, session right
 
-    private var groupSpacing: CGFloat { coordinator.unlockOffered ? 5 : 8 }
+    /// With Unlock Mac offered the row is wider: it takes the usual spacing where that fits,
+    /// and sits a little closer where it doesn't, so the switch itself never shrinks for it.
+    @ViewBuilder private var header: some View {
+        if coordinator.unlockOffered {
+            ViewThatFits(in: .horizontal) {
+                headerRow(tight: false)
+                headerRow(tight: true)
+            }
+        } else {
+            headerRow(tight: false)
+        }
+    }
 
-    private var header: some View {
+    private func headerRow(tight: Bool) -> some View {
+        let groupSpacing: CGFloat = tight ? 5 : 8
         // Must fit the folded-out width (~466 pt): "Copy text from screen" lives in the ••• menu.
-        // Everything sits a little closer while Unlock Mac is offered, so the switch keeps its size.
-        HStack(spacing: coordinator.unlockOffered ? 2 : 8) {
+        return HStack(spacing: tight ? 2 : 8) {
             GlassEffectContainer(spacing: groupSpacing) {
                 HStack(spacing: groupSpacing) {
                     DeckIconButton(systemImage: "doc.on.clipboard", label: "Paste to Mac", action: session.pasteClipboard)
@@ -224,7 +235,7 @@ private struct TrackpadPad: View {
 /// Segmented glass switch with a sliding highlight.
 private struct DeckModePicker: View {
     @Binding var mode: DeckMode
-    /// Set right after a connect: the switch ends in an Unlock Mac button, and shows icons only.
+    /// Set right after a connect: the switch ends in an Unlock Mac button.
     var unlock: (() -> Void)? = nil
     var onSelect: (DeckMode) -> Void = { _ in }
     @Namespace private var ns
@@ -233,20 +244,9 @@ private struct DeckModePicker: View {
         // Both segments show labels, or (when narrow) both show icons only.
         Group {
             if let unlock {
-                HStack(spacing: 2) {
-                    segments(compact: true)
-                    Button(action: unlock) {
-                        Image(systemName: "lock.open")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(.white)
-                            .frame(width: 34, height: 34)
-                            .background(Circle().fill(.blue))
-                            .contentShape(.circle)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Unlock Mac")
-                    .accessibilityHint("Types this Mac's password into its lock screen and presses Return")
-                    .transition(.scale(scale: 0.5).combined(with: .opacity))
+                ViewThatFits(in: .horizontal) {
+                    withUnlock(segments(compact: false), unlock)
+                    withUnlock(segments(compact: true), unlock)
                 }
             } else {
                 ViewThatFits(in: .horizontal) {
@@ -258,6 +258,24 @@ private struct DeckModePicker: View {
         .padding(3)
         .glassEffect(.regular, in: .capsule)
         .sensoryFeedback(.selection, trigger: mode)
+    }
+
+    private func withUnlock(_ segments: some View, _ unlock: @escaping () -> Void) -> some View {
+        HStack(spacing: 2) {
+            segments
+            Button(action: unlock) {
+                Image(systemName: "lock.open")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 34, height: 34)
+                    .background(Circle().fill(.blue))
+                    .contentShape(.circle)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Unlock Mac")
+            .accessibilityHint("Types this Mac's password into its lock screen and presses Return")
+            .transition(.scale(scale: 0.5).combined(with: .opacity))
+        }
     }
 
     private func segments(compact: Bool) -> some View {
